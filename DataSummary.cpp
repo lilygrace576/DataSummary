@@ -61,7 +61,9 @@ DataSummary::DataSummary(char* dateStr){
     t_disp = new TCanvas("Display","DataSummary",2500,1000);
     isData = false;
 
-    string evStr = Form("%s%s/RawDataMerged/",dataDir.c_str(),dateStr);
+//dataDir = "/storage/osg-otte1/shared/TrinityDemonstrator/DataAnalysis/"
+
+    string evStr = Form("%s%s/MergedData/Output/",dataDir.c_str(),dateStr);
     string logDir = Form("%s%s/LOGS/rc.log",dataDir.c_str(),dateStr);
     ReadEv(evStr);
     if(isData){
