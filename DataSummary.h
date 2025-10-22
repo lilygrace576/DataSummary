@@ -12,11 +12,26 @@
 #include <TLine.h>
 #include <TLegend.h>
 #include <TPaveText.h>
+#include <IEvent.h>
+#include <TTree.h>
+#include <IUtilities.h>
+#include <ISiPM.h>
+#include <TFile.h>
 
 #include <Event.h>
 
 #include <vector>
 #include <cmath>
+
+IUtilities *util;
+TTree *tree = 0;
+TTree *treeHLED = 0;
+IEvent *ev;
+IEvent *evHLED;
+ISiPM *sipmInfo;
+
+TFile *fO;
+TFile *file;
 
 using namespace std;
 
