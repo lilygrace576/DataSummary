@@ -92,6 +92,8 @@ void DataSummary::ReadEv(string readStr){
                 }
 
                 sipmInfo = new ISiPM(); 
+                tree->SetBranchAddress("SiPM", &sipmInfo);        
+	            treeHLED->SetBranchAddress("SiPM", &sipmInfo);
 
                 tree = (TTree*)f0->Get("Test");
                 ev = new Event();
