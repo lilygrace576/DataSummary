@@ -90,6 +90,9 @@ void DataSummary::ReadEv(string readStr){
                     cout << "File is a zombie...skipping" << endl;
                     continue;
                 }
+
+                sipmInfo = new ISiPM(); 
+
                 tree = (TTree*)f0->Get("Test");
                 ev = new Event();
                 tree->SetBranchAddress("Events", &ev);
