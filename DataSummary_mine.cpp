@@ -1,4 +1,4 @@
-#include "DataSummary.h"
+#include "LGSDataSum.h"
 
 #include "constants.h"
 #include "rootils.h"
@@ -20,15 +20,10 @@
 #include <TPaveText.h>
 #include <TLegend.h>
 
-// I added
+//
 #include <IEvent.h>
-#include <TTree.h>
-#include <IUtilities.h>
-#include <ISiPM.h>
-#include <TFile.h>
 //
 
-#include <Event.h>
 #include <Pulse.h>
 
 #include <dirent.h>
@@ -38,11 +33,9 @@
 #include <algorithm>
 #include <numeric>
 
-
 using namespace std;
 
-// DataSummary() def
-DataSummary::DataSummary(char* dateStr){
+LGDataSummary::LGDataSummary(char* dateStr){
     avgEv = 0;
     ampDist = 0;
     hledMean = 0;
@@ -54,10 +47,8 @@ DataSummary::DataSummary(char* dateStr){
     ptMean = 0;
     psfSigma = 0;
     trTh = vector<vector<int>>();
-    //
     hledEv = vector<DtStruct>();
     testEv = vector<DtStruct>();
-    //
     pixMeans = vector<vector<Double_t>>(7,vector<Double_t>(maxCh,0.0));
     meanPedRMS = vector<Double_t>(16,0.0);
     fConvolutedFit = new TF1();
@@ -71,41 +62,27 @@ DataSummary::DataSummary(char* dateStr){
     leg = new TLegend();
     pt = new TPaveText();
     t_disp = new TCanvas("Display","DataSummary",2500,1000);
-    // initialize isData as false
     isData = false;
 
-    // dataDir = "/storage/osg-otte1/shared/TrinityDemonstrator/DataAnalysis/"
-    string evStr = Form("%s%s/MergedData/Output/",dataDir.c_str(),dateStr);
+    string evStr = Form("%s%s/RawDataMerged/",dataDir.c_str(),dateStr);
     string logDir = Form("%s%s/LOGS/rc.log",dataDir.c_str(),dateStr);
-
-    // Readv() called for  MergedData/Output/yyyymmdd files
     ReadEv(evStr);
-
-    // isData (boolean) called
-    // if false (?)
     if(isData){
-        // NUMBER OF EVENTS PLOT
         FillTrig();
         ReadTrThresholds(logDir);
-        // ? for rc./yyyymmdd
     }
-    // end isData call
 }
-// end DataSummary() def
 
-// PER NIGHT
-// ReadEv() called for night yyyymmdd
-void DataSummary::ReadEv(string readStr){
-    // tree = pointer to TTree object
+void LGDataSummary::ReadEv(string readStr){
     TTree *tree;
-    // ev = pointer to Event object
-    Event *ev;
-    // initialize countF 
+//
+    IEvent *ev;
+//
+
     int countF = 0;
-    // load in files
+
     DIR *dir;
     struct dirent *ent;
-    // PER FILE OF NIGHT
     if((dir = opendir(readStr.c_str())) != NULL){
         while((ent = readdir(dir)) != NULL){
             string fileStr = Form("%s%s",readStr.c_str(),ent->d_name);
@@ -116,53 +93,39 @@ void DataSummary::ReadEv(string readStr){
                     cout << "File is a zombie...skipping" << endl;
                     continue;
                 }
-            // TESTING FOR TEST EVENTS
-                // get test events
                 tree = (TTree*)f0->Get("Test");
-                //create new Event object (ExACT type)
-                ev = new Event();
-                // sets branch of tree to "Events"
+            //
+                ev = new IEvent();
+            //
                 tree->SetBranchAddress("Events", &ev);
-                // get number entires in current file
                 int nEntries = tree->GetEntries();
-                // if current file empty: skip
                 if(nEntries == 0){
                     cout << "File has no data in the \"Test\" branch...skipping" << endl;
                     delete ev;
                     delete tree;
                     f0->TFile::Close();
                     continue;
-                } 
-                // if file not empty:
-                // add to countF incrementally
+                }
                 countF++;
                 cout << "\"Test\" Events: " << nEntries << endl;
-                // PER EVENT IN FILE
-                // iterate through each event in file
                 for(int evCount = 0; evCount < nEntries; evCount++){
-                    // get tree entry associated w event number evCount
                     tree->GetEntry(evCount);
-                    // looks for HLED events: 
-                    // if((ampVal/maxCh) < 350) -> true
                     if(isHLED(ev)){
-                        // adds event to testEv vector
+                    // //
+                    //     vector<float> evCurrent;
+                    //     vector<float> evBiasVolt;
+                    // //
                         AddTestEv(ev);
-                        // testEv.push_back(DtStruct(false));
-                        // testEv[testEv.size()-1].data[0] += maxCurrent
-                        // testEv[testEv.size()-1].data[1] += BVAvg
                     }
-                    // if ((ampVal/maxCh) > 350) -> false
-                    else{
-                        // add event to hledEv vector
-                        AddHLEDEv(ev);
-                    }
+                    else{AddHLEDEv(ev);}
                 }
                 delete ev;
                 delete tree;
 
-            // TESTING FOR HLED EVENTS
                 tree = (TTree*)f0->Get("HLED");
-                ev = new Event();
+            //
+              ev = new IEvent();  
+            //
                 tree->SetBranchAddress("Events", &ev);
                 nEntries = tree->GetEntries();
                 if(nEntries == 0){
@@ -170,43 +133,37 @@ void DataSummary::ReadEv(string readStr){
                     continue;
                 }
                 cout << "\"HLED\" Events: " << nEntries << endl;
-                // iterate through each event in file
-                // AGAIN PER EVENT IN FILE
                 for(int evCount = 0; evCount < nEntries; evCount++){
                     tree->GetEntry(evCount);
-                    // look for HLED events
                     if(isHLED(ev)){
+                    // //
+                    //     vector<float> evCurrent;
+                    //     vector<float> evBiasVolt;
+                    // //
                         AddTestEv(ev);
                     }
-                    else{
-                        AddHLEDEv(ev);
-                    }
+                    else{AddHLEDEv(ev);}
                 }
                 delete ev;
                 delete tree;
-                // close file
                 f0->TFile::Close();
             }
         }
     }
-    // BACK TO PER NIGHT
+    cout << "countF" << countF << endl;
     if(countF != 0){
-        //calls FillTrig() and ReadTrThresholds(logDir)
         isData = true;
         int hledEnt = hledEv.size();
         int testEnt = testEv.size();
-        for(int i = 0; i < maxCh; i++){ //maxCH? pixMeans = vector<vector<Double_t>>(7,vector<Double_t>(maxCh,0.0));
+        for(int i = 0; i < maxCh; i++){
             for(int j = 0; j < 2; j++){
-                // mean pixels for HLED entries
                 pixMeans[j][i] /= hledEnt;
             }
             for(int j = 2; j < 7; j++){
-                // mean pixels for Test entries
                 pixMeans[j][i] /= testEnt;
             }
         }
         for(int i = 0; i < 16; i++){
-            // meal pedestal RMS for test entries
             meanPedRMS[i] /= testEnt;
         }
         Double_t medianLED = Median(pixMeans[1]);
@@ -221,17 +178,13 @@ void DataSummary::ReadEv(string readStr){
         pedMean = accumulate(pixMeans[2].begin(),pixMeans[2].end(),0.0)/maxCh;
         pedRMSMean = accumulate(pixMeans[3].begin(),pixMeans[3].end(),0.0)/maxCh;
         ampMean = accumulate(pixMeans[4].begin(),pixMeans[4].end(),0.0)/maxCh;
-        // q = ?
         qMean = accumulate(pixMeans[5].begin(),pixMeans[5].end(),0.0)/maxCh;
-        // pt = ?
         ptMean = accumulate(pixMeans[6].begin(),pixMeans[6].end(),0.0)/maxCh;
     }
 }
-// end ReadEv() call
 
-// isHLED def
-// boolean test for HLED events
-bool DataSummary::isHLED(Event *&ev){
+//
+bool LGDataSummary::isHLED(IEvent *&ev){
     Pulse *pulse;
     double ampVal = 0;
     for(int i = 0; i < maxCh; i++){
@@ -240,31 +193,35 @@ bool DataSummary::isHLED(Event *&ev){
         delete pulse;
     }
     if((ampVal/maxCh) < 350){
-        // HLED
         return true;
     }
-    // Not HLED
     return false;
 }
 
-// AddTestEv def
-void DataSummary::AddTestEv(Event *&ev){
-    // data = vector<Double_t>(5,0.0);
+//
+void LGDataSummary::AddTestEv(IEvent *&ev){
     testEv.push_back(DtStruct(false));
-    // get TB time
+//
+    vector<float> evCurrent;
+    vector<float> evBiasVolt;
+//
+//
+    evCurrent = ev->Gethvc();
+    evBiasVolt = ev->Gethv();
+    cout << "addtestev current: " << evCurrent[0] << endl;
+    cout << "addtestev bias: " << evBiasVolt[0] << endl;
+//
     testEv[testEv.size()-1].time = ev->GetTBTime()*1e-8;
     Pulse *pulse;
     for(int i = 0; i < maxCh; i++){
-        // get pulse signal value
         pulse = new Pulse(ev->GetSignalValue(i));
-        // add values to pixMeans
+        
         pixMeans[2][i] += pulse->GetPedestal();
         pixMeans[3][i] += pulse->GetPedestalRMS();
         pixMeans[4][i] += pulse->GetAmplitude();
         pixMeans[5][i] += pulse->GetCharge();
         pixMeans[6][i] += pulse->GetTimePeak();
 
-        // add data to testEv vector
         testEv[testEv.size()-1].data[0] += pulse->GetPedestal();
         testEv[testEv.size()-1].data[1] += pulse->GetPedestalRMS();
         testEv[testEv.size()-1].data[2] += pulse->GetAmplitude();
@@ -273,90 +230,70 @@ void DataSummary::AddTestEv(Event *&ev){
         
         delete pulse;
     }
-    // avg testEvs (?)
     testEv[testEv.size()-1].Avg();
-    // for i of 0-4
+
     for(int i = 0; i < 4; i++){
-    // what is i?
-        // for j of 0-4
         for(int j = 0; j < 4; j++){
-        // what is j?
-            // for k of 8-9
             for(int k = 8; k < 9; k++){
-            // what is k?
-                // i = 0,1,2,3,4
-                // j = 0,1,2,3,4
-                // k = 8,9
-                // get signal value for i*64 + j + k*4
                 pulse = new Pulse(ev->GetSignalValue(i*64+j+k*4));
-                // what is this value?
-                // mean pedestal rms for 4*i + j
                 meanPedRMS[4*i+j] += pulse->GetPedestalRMS();
-                // what is this value?
                 delete pulse;
             }
         }
     }
-    // end all for loops
 
-    // MUSIC section
     int MUSICpos = MUSICmap[(ev->GetROIMusicID())[0]];
     testEv[testEv.size()-1].pTrig = MUSICpos*8;
     Double_t ampMax = 0;
     for(int i = 0; i < 8; i++){
         pulse = new Pulse(ev->GetSignalValue(MUSICpos*8 + i));
-        // if pulse amp > max amp (=0?)
         if(pulse->GetAmplitude() > ampMax){
             testEv[testEv.size()-1].pTrig = MUSICpos*8 + i;
-            //max amplitude
             ampMax = pulse->GetAmplitude();
         }
         delete pulse;
     }
-    // end "for i" loop
 }
-// end AddTestEv def
 
-// AddHLEDEv def
-void DataSummary::AddHLEDEv(Event *&ev){
+//
+void LGDataSummary::AddHLEDEv(IEvent *&ev){
     vector<Double_t> amps(maxCh);
+//
+    vector<float> evCurrent;
+    vector<float> evBiasVolt;
+//
+//
+    evCurrent = ev->Gethvc();
+    evBiasVolt = ev->Gethv();
+    cout << "addtestev current: " << evCurrent[0] << endl;
+    cout << "addtestev bias: " << evBiasVolt[0] << endl;
+//
     TH1 *ledDist = new TH1F("hledDist","Amplitudes normalized to camera median",100,0,2);
-    // data = vector<Double_t>(2,0.0)
     hledEv.push_back(DtStruct(true));
-    // get TB time
     hledEv[hledEv.size()-1].time = ev->GetTBTime()*1e-8;
     Pulse *pulse;
     for(int i = 0; i < maxCh; i++){
-        // get signal value
         pulse = new Pulse(ev->GetSignalValue(i));
         
-        // add amplitudes to pixMeans
         pixMeans[0][i] += pulse->GetAmplitude();
         pixMeans[1][i] += pulse->GetAmplitude();
 
-        // add amplitudes to amps
         amps[i] = pulse->GetAmplitude();
 
-        //adds data to hledEv vector
         hledEv[hledEv.size()-1].data[0] += pulse->GetAmplitude();
         
         delete pulse;
     }
-    // median amp
     Double_t medianLED = Median(amps);
     for(int i = 0; i < maxCh; i++){
         ledDist->Fill(amps[i]/medianLED);
     }
-    // avg hledEv
     hledEv[hledEv.size()-1].Avg();
-    // get standard dev for hledEv
     hledEv[hledEv.size()-1].data[1] =  ledDist->GetStdDev();
     delete ledDist;
 }
-// end AddHLEDEv def
 
-// ReadTrThresholds() def
-void DataSummary::ReadTrThresholds(string readStr){
+void LGDataSummary::ReadTrThresholds(string readStr){
     ifstream logFile(readStr);
     string line, prevLine;
     bool found = false;
@@ -390,10 +327,8 @@ void DataSummary::ReadTrThresholds(string readStr){
     logFile.close();
 }
 
-// FillCamera() def
-void DataSummary::FillCamera(int dp){
+void LGDataSummary::FillCamera(int dp){
     if(camera){delete camera;}
-    // constants.cpp: const vector<string> hTitles = {"Average Amplitude of HLED Events [ADC Counts]","Average Amplitude of HLED Events normalized to median","Average Pedestal [ADC Counts]","Average Pedestal RMS [ADC Counts]","Average Amplitude [ADC Counts]","Average Charge [ADC Counts]","Average Peak Time [Time bins]"};
     camera = new TH2F("camera",hTitles[dp].c_str(),16,-0.5,15.5,16,-0.5,15.5);
     for(int i = 0; i < maxCh; i++){
         int nx, ny;
@@ -439,12 +374,13 @@ void DataSummary::FillCamera(int dp){
     }
     vector<Double_t> hRange = {valSort[hRangeInd[0]],valSort[hRangeInd[1]]};
     Double_t cushion = (hRange[1] - hRange[0]) * 0.05;
-    camera->SetMinimum(hRange[0] - cushion);
-    camera->SetMaximum(hRange[1] + cushion);
+    // camera->SetMinimum(hRange[0] - cushion);
+    // camera->SetMaximum(hRange[1] + cushion);
+    camera->SetMaximum();
+    camera->SetMinimum();
 }
 
-// FillDt() def
-void DataSummary::FillDt(int dp){
+void LGDataSummary::FillDt(int dp){
     if(ddt){delete ddt;}
     if(addt){delete addt;}
     if(lin){delete lin;}
@@ -492,14 +428,11 @@ void DataSummary::FillDt(int dp){
         }
         ++valInc;
     }
-
     vector<Double_t> yRange = {valSort[yRangeInd[0]],valSort[yRangeInd[1]]};
     if(avgVals[dp] < yRange[0]){yRange[0] = avgVals[dp];}
     else if(avgVals[dp] > yRange[1]){yRange[1] = avgVals[dp];}
     Double_t yCushion = (yRange[1] - yRange[0]) * 0.05;
-    // ddt = new TH2F();
     ddt = new TH2F("ddt", //Name
-        // constants.cpp: const vector<string> dTitles = {"Average Amplitude of HLED Events [ADC Counts]","Standard Deviation of Amplitude Distribution","Average Pedestal [ADC Counts]","Average Pedestal RMS [ADC Counts]","Average Amplitude [ADC Counts]","Average Charge [ADC Counts]","Average Peak Time [Time bins]"};
         dTitles[dp].c_str(), //Title
         ((*thisVec).back().time - (*(*thisVec).begin()).time)/binLen, //number of bins on x axis
         (*(*thisVec).begin()).time, //x axis minimum
@@ -508,7 +441,6 @@ void DataSummary::FillDt(int dp){
         yRange[0] - yCushion, //y axis minimum
         yRange[1] + yCushion //y axis maximum
     );
-    // addt = new TH2F();
     addt = new TH2F("addt", //Name
         dTitles[dp].c_str(), //Title
         ((*thisVec).back().time - (*(*thisVec).begin()).time)/binLen, //number of bins on x axis
@@ -534,9 +466,7 @@ void DataSummary::FillDt(int dp){
     );
 }
 
-// PlotAverages() def
-// AVERAGES PLOTS (RIGHT SIDE)
-void DataSummary::PlotAverages(int dp){
+void LGDataSummary::PlotAverages(int dp){
     if(leg){delete leg;}
     FillCamera(dp);
     FillDt(dp);
@@ -546,6 +476,7 @@ void DataSummary::PlotAverages(int dp){
 
     t_disp->cd(1);
     camera->Draw("colz");
+    // camera->SetMinimum();
     DrawMUSICBoundaries();
     t_disp->cd(1)->SetRightMargin(0.15);
 
@@ -581,9 +512,7 @@ void DataSummary::PlotAverages(int dp){
     leg->Draw("SAME");
 }
 
-// FillTrig() def
-// NUMBER OF EVENTS PLOT
-void DataSummary::FillTrig(){
+void LGDataSummary::FillTrig(){
     if(trig){delete trig;}
     trig = new TH1F("trig", //Name
         "Number of Events", //Title
@@ -605,9 +534,7 @@ void DataSummary::FillTrig(){
     trig->SetMarkerColor(1);
 }
 
-// PlotTrig() def
-// TRIGGER RATE PLOT
-void DataSummary::PlotTrig(){
+void LGDataSummary::PlotTrig(){
     if(t_disp){delete t_disp;}
     if(misc1){delete misc1;}
     t_disp = new TCanvas("Display","DataSummary",2500,1000);
@@ -625,9 +552,7 @@ void DataSummary::PlotTrig(){
     misc1->Draw("P");
 }
 
-// PlotROIMusic() def
-// HIGHEST AMPLITUDE PIXELS AND TRIGGERED MUSIC PLOT
-void DataSummary::PlotROIMusic(){
+void LGDataSummary::PlotROIMusic(){
     if(t_disp){delete t_disp;}
     if(camera){delete camera;}
     if(ddt){delete ddt;}
@@ -645,6 +570,8 @@ void DataSummary::PlotROIMusic(){
     t_disp->Divide(2,1);
     t_disp->cd(1);
 	camera->Draw("colz");
+    // camera->SetMaximum();
+    // camera->SetMinimum();
 	DrawMUSICBoundaries();
 	camera->SetStats(0);
 	t_disp->cd(1)->SetRightMargin(0.15);
@@ -655,9 +582,7 @@ void DataSummary::PlotROIMusic(){
 	t_disp->cd(2)->SetRightMargin(0.15);
 }
 
-// PlotFF() def
-// DAILY AVG HLED AMPLITUDE DISTRIBUTION 
-void DataSummary::PlotFF(){
+void LGDataSummary::PlotFF(){
     if(t_disp){delete t_disp;}
     if(misc1){delete misc1;}
     t_disp = new TCanvas("Display","DataSummary",1250,1000);
@@ -684,72 +609,56 @@ void DataSummary::PlotFF(){
     ampDist = tvar3 / tvar1;
 }
 
-// PlotHLED() def
-// AVERAGE AMPLITUDE OF HLED EVENTS PLOT
-void DataSummary::PlotHLED(){
+void LGDataSummary::PlotHLED(){
     if(hledEv.size() > 0){PlotAverages(0);}
     else{
         t_disp->Clear();
     }
 }
 
-// PlotHLEDNorm() def
-// NORMALIZED AVERAGE AMPLITUDE OF HLED EVENTS PLOT
-void DataSummary::PlotHLEDNorm(){
+void LGDataSummary::PlotHLEDNorm(){
     if(hledEv.size() > 0){PlotAverages(1);}
     else{
         t_disp->Clear();
     }
 }
 
-// PlotPedestal def
-// AVERAGE PEDESSTAL PLOT
-void DataSummary::PlotPedestal(){
+void LGDataSummary::PlotPedestal(){
     if(testEv.size() > 0){PlotAverages(2);}
     else{
         t_disp->Clear();
     }
 }
 
-//PlotPedestalRMS() def
-// AVERGAE PREDESTAL RMS PLOT
-void DataSummary::PlotPedestalRMS(){
+void LGDataSummary::PlotPedestalRMS(){
     if(testEv.size() > 0){PlotAverages(3);}
     else{
         t_disp->Clear();
     }
 }
 
-// Plot Amplitude() def
-// AVERAGE AMPLITUDE PLOT
-void DataSummary::PlotAmplitude(){
+void LGDataSummary::PlotAmplitude(){
     if(testEv.size() > 0){PlotAverages(4);}
     else{
         t_disp->Clear();
     }
 }
 
-// PlotCharge() def
-// AVERGAE CHARGE PLOT
-void DataSummary::PlotCharge(){
+void LGDataSummary::PlotCharge(){
     if(testEv.size() > 0){PlotAverages(5);}
     else{
         t_disp->Clear();
     }
 }
 
-// PlotTimePeak() def 
-// AVERAGE PEAK TIME PLOT
-void DataSummary::PlotTimePeak(){
+void LGDataSummary::PlotTimePeak(){
     if(testEv.size() > 0){PlotAverages(6);}
     else{
         t_disp->Clear();
     }
 }
 
-//PlotPSF() def
-// AVG PEDESTAL RMS FOR PIXEL 8 PLOT (LAST ONE)
-void DataSummary::PlotPSF(){
+void LGDataSummary::PlotPSF(){
     if(t_disp){delete t_disp;}
     if(misc1){delete misc1;}
     if(misc2){delete misc2;}
@@ -830,39 +739,37 @@ void DataSummary::PlotPSF(){
 
     psfSigma = sigma;
 }
-
-// get values functions
-vector<vector<int>> DataSummary::GetTrTh(){
+vector<vector<int>> LGDataSummary::GetTrTh(){
     return trTh;
 }
-double DataSummary::GetAvgEv(){
+double LGDataSummary::GetAvgEv(){
     return avgEv;
 }
-double DataSummary::GetAmpDist(){
+double LGDataSummary::GetAmpDist(){
     return ampDist;
 }
-double DataSummary::GetHLEDMean(){
+double LGDataSummary::GetHLEDMean(){
     return hledMean;
 }
-double DataSummary::GetHLEDNMean(){
+double LGDataSummary::GetHLEDNMean(){
     return hledNMean;
 }
-double DataSummary::GetPedMean(){
+double LGDataSummary::GetPedMean(){
     return pedMean;
 }
-double DataSummary::GetPedRMSMean(){
+double LGDataSummary::GetPedRMSMean(){
     return pedRMSMean;
 }
-double DataSummary::GetqMean(){
+double LGDataSummary::GetqMean(){
     return qMean;
 }
-double DataSummary::GetPTMean(){
+double LGDataSummary::GetPTMean(){
     return ptMean;
 }
-double DataSummary::GetPSFSigma(){
+double LGDataSummary::GetPSFSigma(){
     return psfSigma;
 }
 
-bool DataSummary::hasData(){
+bool LGDataSummary::hasData(){
     return isData;
 }
