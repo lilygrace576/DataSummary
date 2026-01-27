@@ -113,6 +113,7 @@ void DataSummary::ReadEv(string readStr){
                     if(isHLED(ev)){AddTestEv(ev);}
                     else{AddHLEDEv(ev);}
                 }
+                
                 delete ev;
                 delete tree;
 
