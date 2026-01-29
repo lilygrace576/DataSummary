@@ -49,6 +49,10 @@ LGDataSummary::LGDataSummary(char* dateStr){
     trTh = vector<vector<int>>();
     hledEv = vector<DtStruct>();
     testEv = vector<DtStruct>();
+
+    fileCurrents = vector<float>();
+    fileBVs = vector<float>();
+
     pixMeans = vector<vector<Double_t>>(7,vector<Double_t>(maxCh,0.0));
     meanPedRMS = vector<Double_t>(16,0.0);
     fConvolutedFit = new TF1();
@@ -94,15 +98,18 @@ void LGDataSummary::ReadEv(string readStr){
                     continue;
                 }
                 tree = (TTree*)f0->Get("Test");
-            //
+                
                 ev = new IEvent();
-            //
+                //
                 tree->SetBranchAddress("Events", &ev);
+
                 int nEntries = tree->GetEntries();
                 if(nEntries == 0){
                     cout << "File has no data in the \"Test\" branch...skipping" << endl;
                     delete ev;
+                    // 
                     delete tree;
+                    //
                     f0->TFile::Close();
                     continue;
                 }
@@ -110,22 +117,29 @@ void LGDataSummary::ReadEv(string readStr){
                 cout << "\"Test\" Events: " << nEntries << endl;
                 for(int evCount = 0; evCount < nEntries; evCount++){
                     tree->GetEntry(evCount);
+
+                    auto evCurrents = ev->Gethvc();
+                    auto evBVs = ev->Gethv();
+                    fileCurrents.push_back(round(10 * *max_element(evCurrents.begin(), evCurrents.end())) / 10);
+                    float BVavg = accumulate(evBVs.begin(), evBVs.end(), 0.0f) / evBVs.size();
+                    fileBVs.push_back(round(10 * BVavg) / 10);
+
                     if(isHLED(ev)){
-                    // //
-                    //     vector<float> evCurrent;
-                    //     vector<float> evBiasVolt;
-                    // //
                         AddTestEv(ev);
                     }
-                    else{AddHLEDEv(ev);}
+                    else{
+                        AddHLEDEv(ev);
+                    }
                 }
                 delete ev;
+                //
                 delete tree;
+                //
 
                 tree = (TTree*)f0->Get("HLED");
-            //
-              ev = new IEvent();  
-            //
+
+                ev = new IEvent();  
+                //
                 tree->SetBranchAddress("Events", &ev);
                 nEntries = tree->GetEntries();
                 if(nEntries == 0){
@@ -135,14 +149,32 @@ void LGDataSummary::ReadEv(string readStr){
                 cout << "\"HLED\" Events: " << nEntries << endl;
                 for(int evCount = 0; evCount < nEntries; evCount++){
                     tree->GetEntry(evCount);
+
+                    auto evCurrents = ev->Gethvc();
+                    auto evBVs = ev->Gethv();
+                    fileCurrents.push_back(round(10 * *max_element(evCurrents.begin(), evCurrents.end())) / 10);
+                    float BVavg = accumulate(evBVs.begin(), evBVs.end(), 0.0f) / evBVs.size();
+                    fileBVs.push_back(round(10 * BVavg) / 10);
+
                     if(isHLED(ev)){
                         AddTestEv(ev);
                         
                     }
-                    else{AddHLEDEv(ev);}
+                    else{
+                        AddHLEDEv(ev);
+                    }
                 }
                 delete ev;
+                //
                 delete tree;
+                //
+                if (!fileCurrents.empty() && !fileBVs.empty()) {
+                    float fileCurrent = *max_element(fileCurrents.begin(), fileCurrents.end());
+                    float fileBV = accumulate(fileBVs.begin(), fileBVs.end(), 0.0f) / fileBVs.size();
+                    cout << "file: " << fileStr << endl;
+                    cout << "file current: " << fileCurrent << endl;
+                    cout << "file BV: " << fileBV << endl;
+                }
                 f0->TFile::Close();
             }
         }
@@ -198,16 +230,6 @@ bool LGDataSummary::isHLED(IEvent *&ev){
 //
 void LGDataSummary::AddTestEv(IEvent *&ev){
     testEv.push_back(DtStruct(false));
-//
-    vector<float> evCurrent;
-    vector<float> evBiasVolt;
-//
-//
-    evCurrent = ev->Gethvc();
-    evBiasVolt = ev->Gethv();
-    cout << "addtestev current: " << evCurrent[0] << endl;
-    cout << "addtestev bias: " << evBiasVolt[0] << endl;
-//
     testEv[testEv.size()-1].time = ev->GetTBTime()*1e-8;
     Pulse *pulse;
     for(int i = 0; i < maxCh; i++){
@@ -252,19 +274,9 @@ void LGDataSummary::AddTestEv(IEvent *&ev){
     }
 }
 
-//
 void LGDataSummary::AddHLEDEv(IEvent *&ev){
     vector<Double_t> amps(maxCh);
-//
-    vector<float> evCurrent;
-    vector<float> evBiasVolt;
-//
-//
-    evCurrent = ev->Gethvc();
-    evBiasVolt = ev->Gethv();
-    cout << "addtestev current: " << evCurrent[0] << endl;
-    cout << "addtestev bias: " << evBiasVolt[0] << endl;
-//
+
     TH1 *ledDist = new TH1F("hledDist","Amplitudes normalized to camera median",100,0,2);
     hledEv.push_back(DtStruct(true));
     hledEv[hledEv.size()-1].time = ev->GetTBTime()*1e-8;
@@ -324,190 +336,190 @@ void LGDataSummary::ReadTrThresholds(string readStr){
     logFile.close();
 }
 
-void LGDataSummary::FillCamera(int dp){
-    if(camera){delete camera;}
-    camera = new TH2F("camera",hTitles[dp].c_str(),16,-0.5,15.5,16,-0.5,15.5);
-    for(int i = 0; i < maxCh; i++){
-        int nx, ny;
-        FindBin(i,&nx,&ny);
-        camera->SetBinContent(nx+1,ny+1,pixMeans[dp][i]);
-    }
-    camera->SetStats(0);
-    //below finds histogram scale s.t. it includes 95% of pixels; purpose is to neglect outliers as opposed to just using min and max 
-    vector<int> hRangeInd(2);
-    vector<Double_t> valSort;
-    for(auto i: pixMeans[dp]){
-        valSort.push_back(i);
-    }
-    sort(valSort.begin(),valSort.end());
-    int valSize = valSort.size();
-    double valInc;
-    if(valSize%2 != 0){
-        hRangeInd = {valSize/2 - 1,valSize/2 + 1};
-        valInc = 3;
-    }
-    else{
-        hRangeInd = {valSize/2 - 1, valSize/2};
-        valInc = 2;
-    }
-    while(valInc < valSize*0.95){
-        Double_t up = valSort[hRangeInd[1]+1] - valSort[hRangeInd[1]];
-        Double_t down = valSort[hRangeInd[0]] - valSort[hRangeInd[0]-1];
-        if(up < down){
-            ++hRangeInd[1];
-            if(hRangeInd[1] == valSize - 1){
-                hRangeInd[0] -= floor(valSize*0.95 - valInc);
-                break;
-            }
-        }
-        else{
-            --hRangeInd[0];
-            if(hRangeInd[0] == 0){
-                hRangeInd[1] += floor(valSize*0.95 - valInc);
-                break;
-            }
-        }
-        ++valInc;
-    }
-    vector<Double_t> hRange = {valSort[hRangeInd[0]],valSort[hRangeInd[1]]};
-    Double_t cushion = (hRange[1] - hRange[0]) * 0.05;
-    // camera->SetMinimum(hRange[0] - cushion);
-    // camera->SetMaximum(hRange[1] + cushion);
-    camera->SetMaximum();
-    camera->SetMinimum();
-}
+// void LGDataSummary::FillCamera(int dp){
+//     if(camera){delete camera;}
+//     camera = new TH2F("camera",hTitles[dp].c_str(),16,-0.5,15.5,16,-0.5,15.5);
+//     for(int i = 0; i < maxCh; i++){
+//         int nx, ny;
+//         FindBin(i,&nx,&ny);
+//         camera->SetBinContent(nx+1,ny+1,pixMeans[dp][i]);
+//     }
+//     camera->SetStats(0);
+//     //below finds histogram scale s.t. it includes 95% of pixels; purpose is to neglect outliers as opposed to just using min and max 
+//     vector<int> hRangeInd(2);
+//     vector<Double_t> valSort;
+//     for(auto i: pixMeans[dp]){
+//         valSort.push_back(i);
+//     }
+//     sort(valSort.begin(),valSort.end());
+//     int valSize = valSort.size();
+//     double valInc;
+//     if(valSize%2 != 0){
+//         hRangeInd = {valSize/2 - 1,valSize/2 + 1};
+//         valInc = 3;
+//     }
+//     else{
+//         hRangeInd = {valSize/2 - 1, valSize/2};
+//         valInc = 2;
+//     }
+//     while(valInc < valSize*0.95){
+//         Double_t up = valSort[hRangeInd[1]+1] - valSort[hRangeInd[1]];
+//         Double_t down = valSort[hRangeInd[0]] - valSort[hRangeInd[0]-1];
+//         if(up < down){
+//             ++hRangeInd[1];
+//             if(hRangeInd[1] == valSize - 1){
+//                 hRangeInd[0] -= floor(valSize*0.95 - valInc);
+//                 break;
+//             }
+//         }
+//         else{
+//             --hRangeInd[0];
+//             if(hRangeInd[0] == 0){
+//                 hRangeInd[1] += floor(valSize*0.95 - valInc);
+//                 break;
+//             }
+//         }
+//         ++valInc;
+//     }
+//     vector<Double_t> hRange = {valSort[hRangeInd[0]],valSort[hRangeInd[1]]};
+//     Double_t cushion = (hRange[1] - hRange[0]) * 0.05;
+//     // camera->SetMinimum(hRange[0] - cushion);
+//     // camera->SetMaximum(hRange[1] + cushion);
+//     camera->SetMaximum();
+//     camera->SetMinimum();
+// }
 
-void LGDataSummary::FillDt(int dp){
-    if(ddt){delete ddt;}
-    if(addt){delete addt;}
-    if(lin){delete lin;}
-    vector<DtStruct> *thisVec;
-    int dpt = dp - (dp >= 2)*2;
-    if(dp<2){
-        thisVec = &hledEv;
-    }
-    else{
-        thisVec = &testEv;
-    }
-    //below finds y axis range s.t. it includes 99.9% of points; purpose is to neglect outliers as opposed to just using min and max 
-    vector<int> yRangeInd(2);
-    vector<Double_t> valSort;
-    for(auto i: (*thisVec)){
-        valSort.push_back(i.data[dpt]);
-    }
-    sort(valSort.begin(),valSort.end());
-    int valSize = valSort.size();
-    double valInc;
-    if(valSize%2 != 0){
-        yRangeInd = {valSize/2 - 1,valSize/2 + 1};
-        valInc = 3;
-    }
-    else{
-        yRangeInd = {valSize/2 - 1, valSize/2};
-        valInc = 2;
-    }
-    while(valInc < valSize*0.999){
-        Double_t up = valSort[yRangeInd[1]+1] - valSort[yRangeInd[1]];
-        Double_t down = valSort[yRangeInd[0]] - valSort[yRangeInd[0]-1];
-        if(up < down){
-            ++yRangeInd[1];
-            if(yRangeInd[1] == valSize - 1){
-                yRangeInd[0] -= floor(valSize*0.999 - valInc);
-                break;
-            }
-        }
-        else{
-            --yRangeInd[0];
-            if(yRangeInd[0] == 0){
-                yRangeInd[1] += floor(valSize*0.999 - valInc);
-                break;
-            }
-        }
-        ++valInc;
-    }
-    vector<Double_t> yRange = {valSort[yRangeInd[0]],valSort[yRangeInd[1]]};
-    if(avgVals[dp] < yRange[0]){yRange[0] = avgVals[dp];}
-    else if(avgVals[dp] > yRange[1]){yRange[1] = avgVals[dp];}
-    Double_t yCushion = (yRange[1] - yRange[0]) * 0.05;
-    ddt = new TH2F("ddt", //Name
-        dTitles[dp].c_str(), //Title
-        ((*thisVec).back().time - (*(*thisVec).begin()).time)/binLen, //number of bins on x axis
-        (*(*thisVec).begin()).time, //x axis minimum
-        (*thisVec).back().time, //x axis maximum
-        1000, //number of bins on y axis
-        yRange[0] - yCushion, //y axis minimum
-        yRange[1] + yCushion //y axis maximum
-    );
-    addt = new TH2F("addt", //Name
-        dTitles[dp].c_str(), //Title
-        ((*thisVec).back().time - (*(*thisVec).begin()).time)/binLen, //number of bins on x axis
-        (*(*thisVec).begin()).time, //x axis minimum
-        (*thisVec).back().time, //x axis maximum
-        1000, //number of bins on y axis
-        yRange[0] - yCushion, //y axis minimum
-        yRange[1] + yCushion //y axis maximum
-    );
-    int count = 0;
-    Double_t runAvg = 0.0;
-    for(auto i: (*thisVec)){
-        runAvg += i.data[dpt];
-        ++count;
-        ddt->Fill(i.time,i.data[dpt]);
-        addt->Fill(i.time,runAvg/count);
-    }
+// void LGDataSummary::FillDt(int dp){
+//     if(ddt){delete ddt;}
+//     if(addt){delete addt;}
+//     if(lin){delete lin;}
+//     vector<DtStruct> *thisVec;
+//     int dpt = dp - (dp >= 2)*2;
+//     if(dp<2){
+//         thisVec = &hledEv;
+//     }
+//     else{
+//         thisVec = &testEv;
+//     }
+//     //below finds y axis range s.t. it includes 99.9% of points; purpose is to neglect outliers as opposed to just using min and max 
+//     vector<int> yRangeInd(2);
+//     vector<Double_t> valSort;
+//     for(auto i: (*thisVec)){
+//         valSort.push_back(i.data[dpt]);
+//     }
+//     sort(valSort.begin(),valSort.end());
+//     int valSize = valSort.size();
+//     double valInc;
+//     if(valSize%2 != 0){
+//         yRangeInd = {valSize/2 - 1,valSize/2 + 1};
+//         valInc = 3;
+//     }
+//     else{
+//         yRangeInd = {valSize/2 - 1, valSize/2};
+//         valInc = 2;
+//     }
+//     while(valInc < valSize*0.999){
+//         Double_t up = valSort[yRangeInd[1]+1] - valSort[yRangeInd[1]];
+//         Double_t down = valSort[yRangeInd[0]] - valSort[yRangeInd[0]-1];
+//         if(up < down){
+//             ++yRangeInd[1];
+//             if(yRangeInd[1] == valSize - 1){
+//                 yRangeInd[0] -= floor(valSize*0.999 - valInc);
+//                 break;
+//             }
+//         }
+//         else{
+//             --yRangeInd[0];
+//             if(yRangeInd[0] == 0){
+//                 yRangeInd[1] += floor(valSize*0.999 - valInc);
+//                 break;
+//             }
+//         }
+//         ++valInc;
+//     }
+//     vector<Double_t> yRange = {valSort[yRangeInd[0]],valSort[yRangeInd[1]]};
+//     if(avgVals[dp] < yRange[0]){yRange[0] = avgVals[dp];}
+//     else if(avgVals[dp] > yRange[1]){yRange[1] = avgVals[dp];}
+//     Double_t yCushion = (yRange[1] - yRange[0]) * 0.05;
+//     ddt = new TH2F("ddt", //Name
+//         dTitles[dp].c_str(), //Title
+//         ((*thisVec).back().time - (*(*thisVec).begin()).time)/binLen, //number of bins on x axis
+//         (*(*thisVec).begin()).time, //x axis minimum
+//         (*thisVec).back().time, //x axis maximum
+//         1000, //number of bins on y axis
+//         yRange[0] - yCushion, //y axis minimum
+//         yRange[1] + yCushion //y axis maximum
+//     );
+//     addt = new TH2F("addt", //Name
+//         dTitles[dp].c_str(), //Title
+//         ((*thisVec).back().time - (*(*thisVec).begin()).time)/binLen, //number of bins on x axis
+//         (*(*thisVec).begin()).time, //x axis minimum
+//         (*thisVec).back().time, //x axis maximum
+//         1000, //number of bins on y axis
+//         yRange[0] - yCushion, //y axis minimum
+//         yRange[1] + yCushion //y axis maximum
+//     );
+//     int count = 0;
+//     Double_t runAvg = 0.0;
+//     for(auto i: (*thisVec)){
+//         runAvg += i.data[dpt];
+//         ++count;
+//         ddt->Fill(i.time,i.data[dpt]);
+//         addt->Fill(i.time,runAvg/count);
+//     }
 
-    lin=new TLine((*(*thisVec).begin()).time, //x1
-        avgVals[dp], //y1
-        (*thisVec).back().time, //x2
-        avgVals[dp] //y2
-    );
-}
+//     lin=new TLine((*(*thisVec).begin()).time, //x1
+//         avgVals[dp], //y1
+//         (*thisVec).back().time, //x2
+//         avgVals[dp] //y2
+//     );
+// }
 
-void LGDataSummary::PlotAverages(int dp){
-    if(leg){delete leg;}
-    FillCamera(dp);
-    FillDt(dp);
-    if(t_disp){delete t_disp;}
-    t_disp = new TCanvas("Display","DataSummary",2500,1000);
-    t_disp->Divide(2,1);
+// void LGDataSummary::PlotAverages(int dp){
+//     if(leg){delete leg;}
+//     FillCamera(dp);
+//     FillDt(dp);
+//     if(t_disp){delete t_disp;}
+//     t_disp = new TCanvas("Display","DataSummary",2500,1000);
+//     t_disp->Divide(2,1);
 
-    t_disp->cd(1);
-    camera->Draw("colz");
-    // camera->SetMinimum();
-    DrawMUSICBoundaries();
-    t_disp->cd(1)->SetRightMargin(0.15);
+//     t_disp->cd(1);
+//     camera->Draw("colz");
+//     // camera->SetMinimum();
+//     DrawMUSICBoundaries();
+//     t_disp->cd(1)->SetRightMargin(0.15);
 
-    t_disp->cd(2);
+//     t_disp->cd(2);
 
-    ddt->GetXaxis()->SetTimeDisplay(1);
-    ddt->GetXaxis()->SetTimeFormat("%H:%M");
-    ddt->GetXaxis()->SetTimeOffset(0,"gmt");
-    ddt->GetXaxis()->SetTitle("UTC Time of Events [HH:MM]");
-    ddt->SetStats(0);
-    ddt->SetMarkerStyle(6);
-    ddt->SetMarkerSize(6);
-    ddt->SetMarkerColor(1);
+//     ddt->GetXaxis()->SetTimeDisplay(1);
+//     ddt->GetXaxis()->SetTimeFormat("%H:%M");
+//     ddt->GetXaxis()->SetTimeOffset(0,"gmt");
+//     ddt->GetXaxis()->SetTitle("UTC Time of Events [HH:MM]");
+//     ddt->SetStats(0);
+//     ddt->SetMarkerStyle(6);
+//     ddt->SetMarkerSize(6);
+//     ddt->SetMarkerColor(1);
     
-    addt->SetStats(0);
-    addt->SetMarkerStyle(6);
-    addt->SetMarkerSize(6);
-    addt->SetMarkerColor(6);
+//     addt->SetStats(0);
+//     addt->SetMarkerStyle(6);
+//     addt->SetMarkerSize(6);
+//     addt->SetMarkerColor(6);
 
-    lin->SetLineColor(kGreen);
-    lin->SetLineColorAlpha(kGreen,0.6);
-    lin->SetLineWidth(4);
+//     lin->SetLineColor(kGreen);
+//     lin->SetLineColorAlpha(kGreen,0.6);
+//     lin->SetLineWidth(4);
 
-    ddt->Draw("");
-    addt->Draw("SAME");
-    lin->Draw("SAME");
+//     ddt->Draw("");
+//     addt->Draw("SAME");
+//     lin->Draw("SAME");
 
-    leg = new TLegend(0.1,0.90,0.9,0.94);
-    leg->SetNColumns(4);
-    leg->AddEntry(ddt,"Data Points","p");
-    leg->AddEntry(addt,"Running Avg","p");
-    leg->AddEntry(lin,"Expected Avg","l");
-    leg->Draw("SAME");
-}
+//     leg = new TLegend(0.1,0.90,0.9,0.94);
+//     leg->SetNColumns(4);
+//     leg->AddEntry(ddt,"Data Points","p");
+//     leg->AddEntry(addt,"Running Avg","p");
+//     leg->AddEntry(lin,"Expected Avg","l");
+//     leg->Draw("SAME");
+// }
 
 void LGDataSummary::FillTrig(){
     if(trig){delete trig;}
@@ -531,211 +543,211 @@ void LGDataSummary::FillTrig(){
     trig->SetMarkerColor(1);
 }
 
-void LGDataSummary::PlotTrig(){
-    if(t_disp){delete t_disp;}
-    if(misc1){delete misc1;}
-    t_disp = new TCanvas("Display","DataSummary",2500,1000);
-    t_disp->Divide(2,1);
-    t_disp->cd(1);
-    t_disp->cd(1)->SetLogy();
-    trig->SetAxisRange(1,4000,"Y");
-    trig->Draw("P");
-    t_disp->cd(2);
-    misc1 = (TH1F*)trig->Clone("misc1");
-    misc1->SetTitle("Trigger Rate [Events/s]");
-    misc1->Scale((Double_t)1/binLen);
-    misc1->SetAxisRange(0,35,"Y");
-    misc1->GetYaxis()->SetTitle("Trigger rate [events/s]");
-    misc1->Draw("P");
-}
+// void LGDataSummary::PlotTrig(){
+//     if(t_disp){delete t_disp;}
+//     if(misc1){delete misc1;}
+//     t_disp = new TCanvas("Display","DataSummary",2500,1000);
+//     t_disp->Divide(2,1);
+//     t_disp->cd(1);
+//     t_disp->cd(1)->SetLogy();
+//     trig->SetAxisRange(1,4000,"Y");
+//     trig->Draw("P");
+//     t_disp->cd(2);
+//     misc1 = (TH1F*)trig->Clone("misc1");
+//     misc1->SetTitle("Trigger Rate [Events/s]");
+//     misc1->Scale((Double_t)1/binLen);
+//     misc1->SetAxisRange(0,35,"Y");
+//     misc1->GetYaxis()->SetTitle("Trigger rate [events/s]");
+//     misc1->Draw("P");
+// }
 
-void LGDataSummary::PlotROIMusic(){
-    if(t_disp){delete t_disp;}
-    if(camera){delete camera;}
-    if(ddt){delete ddt;}
+// void LGDataSummary::PlotROIMusic(){
+//     if(t_disp){delete t_disp;}
+//     if(camera){delete camera;}
+//     if(ddt){delete ddt;}
 
-    camera = new TH2F("pixHeat","Highest Amplitude Pixels in Triggered Music [Counts]",16,-0.5,15.5,16,-0.5,15.5);
-    ddt = new TH2F("musicHeat","Triggered Music [Counts]",8,-0.5,15.5,4,-0.5,15.5);
-    for(auto i: testEv){
-        int nx, ny;
-		FindBin(i.pTrig,&nx,&ny);
-		camera->Fill(nx,ny);
-		ddt->Fill(nx,ny);
-    }
+//     camera = new TH2F("pixHeat","Highest Amplitude Pixels in Triggered Music [Counts]",16,-0.5,15.5,16,-0.5,15.5);
+//     ddt = new TH2F("musicHeat","Triggered Music [Counts]",8,-0.5,15.5,4,-0.5,15.5);
+//     for(auto i: testEv){
+//         int nx, ny;
+// 		FindBin(i.pTrig,&nx,&ny);
+// 		camera->Fill(nx,ny);
+// 		ddt->Fill(nx,ny);
+//     }
 
-    t_disp = new TCanvas("Display","DataSummary",2500,1000);
-    t_disp->Divide(2,1);
-    t_disp->cd(1);
-	camera->Draw("colz");
-    // camera->SetMaximum();
-    // camera->SetMinimum();
-	DrawMUSICBoundaries();
-	camera->SetStats(0);
-	t_disp->cd(1)->SetRightMargin(0.15);
-	t_disp->cd(2);
-	ddt->Draw("colz");
-	DrawMUSICBoundaries();
-	ddt->SetStats(0);
-	t_disp->cd(2)->SetRightMargin(0.15);
-}
+//     t_disp = new TCanvas("Display","DataSummary",2500,1000);
+//     t_disp->Divide(2,1);
+//     t_disp->cd(1);
+// 	camera->Draw("colz");
+//     // camera->SetMaximum();
+//     // camera->SetMinimum();
+// 	DrawMUSICBoundaries();
+// 	camera->SetStats(0);
+// 	t_disp->cd(1)->SetRightMargin(0.15);
+// 	t_disp->cd(2);
+// 	ddt->Draw("colz");
+// 	DrawMUSICBoundaries();
+// 	ddt->SetStats(0);
+// 	t_disp->cd(2)->SetRightMargin(0.15);
+// }
 
-void LGDataSummary::PlotFF(){
-    if(t_disp){delete t_disp;}
-    if(misc1){delete misc1;}
-    t_disp = new TCanvas("Display","DataSummary",1250,1000);
-    misc1 = new TH1F("misc1", //Name
-        "Distribution of Daily Average HLED Amplitude normalized to median", //Title
-        150, //number of bins on x axis
-        0, //x axis minimum
-        1499 //x axis maximum
-    );
-    for(auto i: pixMeans[0]){
-        misc1->Fill(i);
-    }
-    misc1->GetXaxis()->SetTitle("HLED signal amplitude normalized to median");
-    misc1->GetYaxis()->SetTitle("Number of pixels");
-    gStyle->SetOptStat(1100);
-    t_disp->cd();
-    misc1->Draw("hist");
+// void LGDataSummary::PlotFF(){
+//     if(t_disp){delete t_disp;}
+//     if(misc1){delete misc1;}
+//     t_disp = new TCanvas("Display","DataSummary",1250,1000);
+//     misc1 = new TH1F("misc1", //Name
+//         "Distribution of Daily Average HLED Amplitude normalized to median", //Title
+//         150, //number of bins on x axis
+//         0, //x axis minimum
+//         1499 //x axis maximum
+//     );
+//     for(auto i: pixMeans[0]){
+//         misc1->Fill(i);
+//     }
+//     misc1->GetXaxis()->SetTitle("HLED signal amplitude normalized to median");
+//     misc1->GetYaxis()->SetTitle("Number of pixels");
+//     gStyle->SetOptStat(1100);
+//     t_disp->cd();
+//     misc1->Draw("hist");
 
-    double stats[4];
-    misc1->GetStats(stats);
-    double tvar1 = (stats[0] > 0) ? (stats[2] / stats[0]) : 0.0;
-    double tvar2 = (stats[0] > 0) ? (stats[3] / stats[0] - tvar1 * tvar1) : 0.0;
-    double tvar3 = (tvar2 > 0) ? sqrt(tvar2) : 0.0;
-    ampDist = tvar3 / tvar1;
-}
+//     double stats[4];
+//     misc1->GetStats(stats);
+//     double tvar1 = (stats[0] > 0) ? (stats[2] / stats[0]) : 0.0;
+//     double tvar2 = (stats[0] > 0) ? (stats[3] / stats[0] - tvar1 * tvar1) : 0.0;
+//     double tvar3 = (tvar2 > 0) ? sqrt(tvar2) : 0.0;
+//     ampDist = tvar3 / tvar1;
+// }
 
-void LGDataSummary::PlotHLED(){
-    if(hledEv.size() > 0){PlotAverages(0);}
-    else{
-        t_disp->Clear();
-    }
-}
+// void LGDataSummary::PlotHLED(){
+//     if(hledEv.size() > 0){PlotAverages(0);}
+//     else{
+//         t_disp->Clear();
+//     }
+// }
 
-void LGDataSummary::PlotHLEDNorm(){
-    if(hledEv.size() > 0){PlotAverages(1);}
-    else{
-        t_disp->Clear();
-    }
-}
+// void LGDataSummary::PlotHLEDNorm(){
+//     if(hledEv.size() > 0){PlotAverages(1);}
+//     else{
+//         t_disp->Clear();
+//     }
+// }
 
-void LGDataSummary::PlotPedestal(){
-    if(testEv.size() > 0){PlotAverages(2);}
-    else{
-        t_disp->Clear();
-    }
-}
+// void LGDataSummary::PlotPedestal(){
+//     if(testEv.size() > 0){PlotAverages(2);}
+//     else{
+//         t_disp->Clear();
+//     }
+// }
 
-void LGDataSummary::PlotPedestalRMS(){
-    if(testEv.size() > 0){PlotAverages(3);}
-    else{
-        t_disp->Clear();
-    }
-}
+// void LGDataSummary::PlotPedestalRMS(){
+//     if(testEv.size() > 0){PlotAverages(3);}
+//     else{
+//         t_disp->Clear();
+//     }
+// }
 
-void LGDataSummary::PlotAmplitude(){
-    if(testEv.size() > 0){PlotAverages(4);}
-    else{
-        t_disp->Clear();
-    }
-}
+// void LGDataSummary::PlotAmplitude(){
+//     if(testEv.size() > 0){PlotAverages(4);}
+//     else{
+//         t_disp->Clear();
+//     }
+// }
 
-void LGDataSummary::PlotCharge(){
-    if(testEv.size() > 0){PlotAverages(5);}
-    else{
-        t_disp->Clear();
-    }
-}
+// void LGDataSummary::PlotCharge(){
+//     if(testEv.size() > 0){PlotAverages(5);}
+//     else{
+//         t_disp->Clear();
+//     }
+// }
 
-void LGDataSummary::PlotTimePeak(){
-    if(testEv.size() > 0){PlotAverages(6);}
-    else{
-        t_disp->Clear();
-    }
-}
+// void LGDataSummary::PlotTimePeak(){
+//     if(testEv.size() > 0){PlotAverages(6);}
+//     else{
+//         t_disp->Clear();
+//     }
+// }
 
-void LGDataSummary::PlotPSF(){
-    if(t_disp){delete t_disp;}
-    if(misc1){delete misc1;}
-    if(misc2){delete misc2;}
-    if(fConvolutedFit){delete fConvolutedFit;}
-    if(pt){delete pt;}
-    t_disp = new TCanvas("Display","DataSummary",1250,1000);
-    misc1 = new TH1F("misc1", //Name
-        "Average Pedestal RMS per Row for pixel column 8", //Title
-        16, //number of bins on x axis
-        0, //x axis minimum
-        16 //x axis maximum
-    );
-    misc2 = new TGraph(16);
+// void LGDataSummary::PlotPSF(){
+//     if(t_disp){delete t_disp;}
+//     if(misc1){delete misc1;}
+//     if(misc2){delete misc2;}
+//     if(fConvolutedFit){delete fConvolutedFit;}
+//     if(pt){delete pt;}
+//     t_disp = new TCanvas("Display","DataSummary",1250,1000);
+//     misc1 = new TH1F("misc1", //Name
+//         "Average Pedestal RMS per Row for pixel column 8", //Title
+//         16, //number of bins on x axis
+//         0, //x axis minimum
+//         16 //x axis maximum
+//     );
+//     misc2 = new TGraph(16);
 
-    for(int i = 0; i < 16; i ++){
-        misc1->SetBinContent(i+1,meanPedRMS[i]);
-        misc2->SetPoint(i,(i+0.5),meanPedRMS[i]);
-    }
+//     for(int i = 0; i < 16; i ++){
+//         misc1->SetBinContent(i+1,meanPedRMS[i]);
+//         misc2->SetPoint(i,(i+0.5),meanPedRMS[i]);
+//     }
 
-    fConvolutedFit = new TF1("fConvolutedFit", //Name
-        ConvolutedRMSFunction, //Formula
-        0, //x axis minimum
-        16, //x axis maximum
-        4 //number of free parameters (?)
-    );
-    // Initial parameters: [0]=offset, [1]=swing, [2]=mean (mu), [3]=sigma
-    fConvolutedFit->SetParameters(20, 10, 8, 2); // Adjust initial parameters accordingly
-    // Set limits for the parameters
-    fConvolutedFit->SetParLimits(0, 0, 100); // Limits for offset
-    fConvolutedFit->SetParLimits(1, 0, 100); // Limits for swing
-    fConvolutedFit->SetParLimits(2, 0, 16); // Limits for mu
-    fConvolutedFit->SetParLimits(3, 0, 5); // Limits for sigma
-    fConvolutedFit->SetParNames("Offset", "Swing", "Mu", "Sigma");
-    // Restrict the fit range using SetRange
-    fConvolutedFit->SetRange(0, 9);// * 0.3); // Set range from 0 to 8 * 0.3
-    // Fit the function to the data in the graph
-    misc2->Fit(fConvolutedFit, "R"); // "R" for restricted fit
+//     fConvolutedFit = new TF1("fConvolutedFit", //Name
+//         ConvolutedRMSFunction, //Formula
+//         0, //x axis minimum
+//         16, //x axis maximum
+//         4 //number of free parameters (?)
+//     );
+//     // Initial parameters: [0]=offset, [1]=swing, [2]=mean (mu), [3]=sigma
+//     fConvolutedFit->SetParameters(20, 10, 8, 2); // Adjust initial parameters accordingly
+//     // Set limits for the parameters
+//     fConvolutedFit->SetParLimits(0, 0, 100); // Limits for offset
+//     fConvolutedFit->SetParLimits(1, 0, 100); // Limits for swing
+//     fConvolutedFit->SetParLimits(2, 0, 16); // Limits for mu
+//     fConvolutedFit->SetParLimits(3, 0, 5); // Limits for sigma
+//     fConvolutedFit->SetParNames("Offset", "Swing", "Mu", "Sigma");
+//     // Restrict the fit range using SetRange
+//     fConvolutedFit->SetRange(0, 9);// * 0.3); // Set range from 0 to 8 * 0.3
+//     // Fit the function to the data in the graph
+//     misc2->Fit(fConvolutedFit, "R"); // "R" for restricted fit
 
-    misc1->GetXaxis()->SetTitle("Camera Row");
-    misc1->GetXaxis()->SetNdivisions(16);
-    misc1->GetYaxis()->SetTitle("Average Pedestal RMS [ADC counts]");
-    misc1->SetLineWidth(1);
-    misc1->SetLineColor(kBlack);
-    misc1->SetStats(0);
+//     misc1->GetXaxis()->SetTitle("Camera Row");
+//     misc1->GetXaxis()->SetNdivisions(16);
+//     misc1->GetYaxis()->SetTitle("Average Pedestal RMS [ADC counts]");
+//     misc1->SetLineWidth(1);
+//     misc1->SetLineColor(kBlack);
+//     misc1->SetStats(0);
     
-    misc2->SetMarkerStyle(20);
-    misc2->SetMarkerColor(kBlack);
-    misc2->SetLineColor(kBlack);
-    misc2->SetLineWidth(1);
+//     misc2->SetMarkerStyle(20);
+//     misc2->SetMarkerColor(kBlack);
+//     misc2->SetLineColor(kBlack);
+//     misc2->SetLineWidth(1);
 
-    // Optionally draw the fitted function on the same canvas
-    fConvolutedFit->SetLineColor(kRed);
-    fConvolutedFit->Draw("same");
+//     // Optionally draw the fitted function on the same canvas
+//     fConvolutedFit->SetLineColor(kRed);
+//     fConvolutedFit->Draw("same");
 
-    Double_t offset = fConvolutedFit->GetParameter(0);
-    Double_t offsetError = fConvolutedFit->GetParError(0);
-    Double_t swing = fConvolutedFit->GetParameter(1);
-    Double_t swingError = fConvolutedFit->GetParError(1);
-    Double_t mu = fConvolutedFit->GetParameter(2);
-    Double_t muError = fConvolutedFit->GetParError(2);
-    Double_t sigma = fConvolutedFit->GetParameter(3);
-    Double_t sigmaError = fConvolutedFit->GetParError(3);
-    Double_t chi2 = fConvolutedFit->GetChisquare();
-    Int_t ndf = fConvolutedFit->GetNDF(); // Number of degrees of freedom
-    pt = new TPaveText(0.6, 0.6, 0.9, 0.9, "NDC"); // NDC: Normalized Device Coordinates
-    pt->SetFillColor(0); // Transparent background
-    pt->SetTextAlign(12); // Align left
-	pt->AddText(Form("Offset: %.3f +/- %.3f [ADC counts]", offset, offsetError));
-    pt->AddText(Form("Swing: %.3f +/- %.3f [ADC counts]", swing, swingError));
-    pt->AddText(Form("Mu: %.3f +/- %.3f", mu, muError));
-    pt->AddText(Form("Sigma: %.3f +/- %.3f", sigma, sigmaError));
-    pt->AddText(Form("#chi^{2}/ndf: %.2f / %d", chi2, ndf));
+//     Double_t offset = fConvolutedFit->GetParameter(0);
+//     Double_t offsetError = fConvolutedFit->GetParError(0);
+//     Double_t swing = fConvolutedFit->GetParameter(1);
+//     Double_t swingError = fConvolutedFit->GetParError(1);
+//     Double_t mu = fConvolutedFit->GetParameter(2);
+//     Double_t muError = fConvolutedFit->GetParError(2);
+//     Double_t sigma = fConvolutedFit->GetParameter(3);
+//     Double_t sigmaError = fConvolutedFit->GetParError(3);
+//     Double_t chi2 = fConvolutedFit->GetChisquare();
+//     Int_t ndf = fConvolutedFit->GetNDF(); // Number of degrees of freedom
+//     pt = new TPaveText(0.6, 0.6, 0.9, 0.9, "NDC"); // NDC: Normalized Device Coordinates
+//     pt->SetFillColor(0); // Transparent background
+//     pt->SetTextAlign(12); // Align left
+// 	pt->AddText(Form("Offset: %.3f +/- %.3f [ADC counts]", offset, offsetError));
+//     pt->AddText(Form("Swing: %.3f +/- %.3f [ADC counts]", swing, swingError));
+//     pt->AddText(Form("Mu: %.3f +/- %.3f", mu, muError));
+//     pt->AddText(Form("Sigma: %.3f +/- %.3f", sigma, sigmaError));
+//     pt->AddText(Form("#chi^{2}/ndf: %.2f / %d", chi2, ndf));
 
-    t_disp->cd();
-    misc1->Draw("hist");
-    misc2->Draw("P same");
-    pt->Draw();
+//     t_disp->cd();
+//     misc1->Draw("hist");
+//     misc2->Draw("P same");
+//     pt->Draw();
 
-    psfSigma = sigma;
-}
+//     psfSigma = sigma;
+// }
 vector<vector<int>> LGDataSummary::GetTrTh(){
     return trTh;
 }
