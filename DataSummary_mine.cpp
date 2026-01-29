@@ -136,11 +136,8 @@ void LGDataSummary::ReadEv(string readStr){
                 for(int evCount = 0; evCount < nEntries; evCount++){
                     tree->GetEntry(evCount);
                     if(isHLED(ev)){
-                    // //
-                    //     vector<float> evCurrent;
-                    //     vector<float> evBiasVolt;
-                    // //
                         AddTestEv(ev);
+                        
                     }
                     else{AddHLEDEv(ev);}
                 }
