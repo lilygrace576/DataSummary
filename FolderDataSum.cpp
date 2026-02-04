@@ -1,3 +1,5 @@
+//changed dataDir def
+
 #include "DataSummary.h"
 
 #include "rootils.h"
@@ -22,7 +24,8 @@ int main(int argc, char **argv){
     if (mount == "y"){ // with usingin htcondor you need to have contianers and some use full paths and other use mounts this lets you specify
         std::cout << "using mounted directory path" << std::endl;
         mnt="/mnt/";
-        dataDir = "/mnt/Data/";
+        //changed from Data to DataAnalysis
+        dataDir = "/mnt/DataAnalysis/";
     }
 
     string outStr = Form("%s%s",outDir.c_str(),argv[1]);
