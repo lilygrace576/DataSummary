@@ -20,9 +20,10 @@
 #include <TPaveText.h>
 #include <TLegend.h>
 
-#include <Event.h>
-#include <Pulse.h>
+//changed to IEvent
+#include <IEvent.h>
 
+#include <Pulse.h>
 #include <dirent.h>
 #include <iostream>
 #include <vector>
@@ -33,6 +34,10 @@
 using namespace std;
 
 DataSummary::DataSummary(char* dateStr){
+    //
+    evRoundCurrent = 0;
+    evRoundBVAvg = 0;
+    //
     avgEv = 0;
     ampDist = 0;
     hledMean = 0;
@@ -46,7 +51,8 @@ DataSummary::DataSummary(char* dateStr){
     trTh = vector<vector<int>>();
     hledEv = vector<DtStruct>();
     testEv = vector<DtStruct>();
-    pixMeans = vector<vector<Double_t>>(7,vector<Double_t>(maxCh,0.0));
+    //change from 7 to 14
+    pixMeans = vector<vector<Double_t>>(14,vector<Double_t>(maxCh,0.0));
     meanPedRMS = vector<Double_t>(16,0.0);
     fConvolutedFit = new TF1();
     camera = new TH2F();
@@ -61,25 +67,34 @@ DataSummary::DataSummary(char* dateStr){
     t_disp = new TCanvas("Display","DataSummary",2500,1000);
     isData = false;
 
-//dataDir = "/storage/osg-otte1/shared/TrinityDemonstrator/DataAnalysis/"
-
-    string evStr = Form("%s%s/MergedData/Output/",dataDir.c_str(),dateStr);
-    string logDir = Form("%s%s/LOGS/rc.log",dataDir.c_str(),dateStr);
+    //changed paths to pull from Merged Data
+    string evStr = Form("%sMergedData/Output/%s/",dataDir.c_str(),dateStr);
+    cout << evStr << endl;
+    //changed to start w mnt not dataDir
+    string logDir = Form("%sData/%s/LOGS/rc.log",mnt.c_str(),dateStr);
+    cout << logDir << endl;
+    
     ReadEv(evStr);
+
     if(isData){
+        //
         FillTrig();
+        //reads RCLog
         ReadTrThresholds(logDir);
     }
-}
+} //end DataSummary def
 
 void DataSummary::ReadEv(string readStr){
     TTree *tree;
-    Event *ev;
+
+    //changed to IEvent
+    IEvent *ev;
 
     int countF = 0;
 
     DIR *dir;
     struct dirent *ent;
+    //OPEN FILE
     if((dir = opendir(readStr.c_str())) != NULL){
         while((ent = readdir(dir)) != NULL){
             string fileStr = Form("%s%s",readStr.c_str(),ent->d_name);
@@ -90,13 +105,14 @@ void DataSummary::ReadEv(string readStr){
                     cout << "File is a zombie...skipping" << endl;
                     continue;
                 }
+                //A: intialize after opening file
+                vector<float> fileCurrents;
+                vector<float> fileBVs;
 
-                sipmInfo = new ISiPM(); 
-                tree->SetBranchAddress("SiPM", &sipmInfo);        
-	            treeHLED->SetBranchAddress("SiPM", &sipmInfo);
-
+        // TEST EVENTS
                 tree = (TTree*)f0->Get("Test");
-                ev = new Event();
+                //changed to IEvent
+                ev = new IEvent();
                 tree->SetBranchAddress("Events", &ev);
                 int nEntries = tree->GetEntries();
                 if(nEntries == 0){
@@ -108,17 +124,56 @@ void DataSummary::ReadEv(string readStr){
                 }
                 countF++;
                 cout << "\"Test\" Events: " << nEntries << endl;
+            //EVENT LOOP
                 for(int evCount = 0; evCount < nEntries; evCount++){
+                    //A:
+                    vector<float> evCurrents;
+                    vector<float> evBiasVoltages;
+
                     tree->GetEntry(evCount);
-                    if(isHLED(ev)){AddTestEv(ev);}
-                    else{AddHLEDEv(ev);}
-                }
-                
+
+                    //Ab:
+                    evCurrents = ev->Gethvc();
+                    evBiasVoltages = ev->Gethv();
+
+                    if(isHLED(ev)){
+                        // //B:
+                        // HV(ev);
+                        // HVC(ev);
+                        AddTestEv(ev);
+                        // //Aa:
+                        // evCurrents = ev->Gethvc();
+                        // evBiasVoltages = ev->Gethv();
+                    }
+                    else{
+                        // //B:
+                        // HV(ev);
+                        // HVC(ev);
+                        AddHLEDEv(ev);
+                        // //Aa:
+                        // evCurrents = ev->Gethvc();
+                        // evBiasVoltages = ev->Gethv();
+                    }
+
+                    // //A:
+                    // auto evMaxCurrent = max_element(evCurrents.begin(), evCurrents.end());
+                    // float evRoundCurrent = round(10 * *evMaxCurrent) / 10;
+                    // fileCurrents.push_back(evRoundCurrent);
+
+                    // float evSumV = accumulate(evBiasVoltages.begin(), evBiasVoltages.end(), 0.0);
+		            // float evBVAvg = evSumV / evBiasVoltages.size();
+                    // float evRoundBVAvg = round(10 * evBVAvg) / 10;
+                    // fileBVs.push_back(evRoundBVAvg);
+
+                } //END EVENT LOOP
                 delete ev;
                 delete tree;
+        // END TEST EVENTS
 
+        //HLED EVENTS
                 tree = (TTree*)f0->Get("HLED");
-                ev = new Event();
+                //changed to IEvent
+                ev = new IEvent();
                 tree->SetBranchAddress("Events", &ev);
                 nEntries = tree->GetEntries();
                 if(nEntries == 0){
@@ -126,17 +181,67 @@ void DataSummary::ReadEv(string readStr){
                     continue;
                 }
                 cout << "\"HLED\" Events: " << nEntries << endl;
+            //EVENT LOOP
                 for(int evCount = 0; evCount < nEntries; evCount++){
+                    // //A:
+                    // vector<float> evCurrents;
+                    // vector<float> evBiasVoltages;
+
                     tree->GetEntry(evCount);
-                    if(isHLED(ev)){AddTestEv(ev);}
-                    else{AddHLEDEv(ev);}
-                }
+
+                    // //Ab:
+                    // evCurrents = ev->Gethvc();
+                    // evBiasVoltages = ev->Gethv();
+
+                    if(isHLED(ev)){
+                        HV(ev);
+                        HVC(ev);
+                        AddTestEv(ev);
+                        // //Aa:
+                        // evCurrents = ev->Gethvc();
+                        // evBiasVoltages = ev->Gethv();
+                    }
+                    else{
+                        HV(ev);
+                        HVC(ev);
+                        AddHLEDEv(ev);
+                        // //Aa:
+                        // evCurrents = ev->Gethvc();
+                        // evBiasVoltages = ev->Gethv();
+                    }
+
+                    // //A:
+                    // auto evMaxCurrent = max_element(evCurrents.begin(), evCurrents.end());
+                    // float evRoundCurrent = round(10 * *evMaxCurrent) / 10;
+                    // fileCurrents.push_back(evRoundCurrent);
+
+                    // float evSumV = accumulate(evBiasVoltages.begin(), evBiasVoltages.end(), 0.0);
+		            // float evBVAvg = evSumV / evBiasVoltages.size();
+                    // float evRoundBVAvg = round(10 * evBVAvg) / 10;
+                    // fileBVs.push_back(evRoundBVAvg);
+
+                } //END EVENT LOOP
                 delete ev;
                 delete tree;
+                //CLOSE FILE
                 f0->TFile::Close();
-            }
-        }
-    }
+
+                // //A:
+                // auto maxFileCurrent = max_element(fileCurrents.begin(), fileCurrents.end());
+                // float roundFileCurrent = round(10 * *maxFileCurrent) / 10;
+                // float sumFileV = accumulate(fileBVs.begin(), fileBVs.end(), 0.0);
+                // float FileBVAvg = sumFileV / fileBVs.size();
+                // float roundFileBVAvg = round(10 * FileBVAvg) / 10;
+
+                // cout << "file current: " << roundFileCurrent << endl;
+                // cout << "file bv: " << roundFileBVAvg << endl;
+   
+                
+            } //END OF 2ND IF FILE LOOP
+        } //END OF WHILE FILE LOOP
+    } //END OF 1ST IF FILE LOOP
+
+
     if(countF != 0){
         isData = true;
         int hledEnt = hledEv.size();
@@ -169,7 +274,34 @@ void DataSummary::ReadEv(string readStr){
     }
 }
 
-bool DataSummary::isHLED(Event *&ev){
+//added
+int DataSummary::HVC(IEvent *&ev){
+    vector<float> evCurrents;
+
+    evCurrents = ev->Gethvc();
+
+    auto evMaxCurrent = max_element(evCurrents.begin(), evCurrents.end());
+    float evRoundCurrent = round(10 * *evMaxCurrent) / 10;
+
+    return evRoundCurrent;
+    
+}
+
+int DataSummary::HV(IEvent *&ev){
+    vector<float> evBiasVoltages;
+
+    evBiasVoltages = ev->Gethv();
+    
+    float evSumV = accumulate(evBiasVoltages.begin(), evBiasVoltages.end(), 0.0);
+    float evBVAvg = evSumV / evBiasVoltages.size();
+    float evRoundBVAvg = round(10 * evBVAvg) / 10;
+
+    return evRoundBVAvg;
+}
+//
+
+//changed to IEvent
+bool DataSummary::isHLED(IEvent *&ev){
     Pulse *pulse;
     double ampVal = 0;
     for(int i = 0; i < maxCh; i++){
@@ -183,8 +315,10 @@ bool DataSummary::isHLED(Event *&ev){
     return false;
 }
 
-void DataSummary::AddTestEv(Event *&ev){
+//changed to IEvent
+void DataSummary::AddTestEv(IEvent *&ev){
     testEv.push_back(DtStruct(false));
+    //DtStruct(false): data = vector<Double_t>(7,0.0);, truHLED = false;
     testEv[testEv.size()-1].time = ev->GetTBTime()*1e-8;
     Pulse *pulse;
     for(int i = 0; i < maxCh; i++){
@@ -201,10 +335,15 @@ void DataSummary::AddTestEv(Event *&ev){
         testEv[testEv.size()-1].data[2] += pulse->GetAmplitude();
         testEv[testEv.size()-1].data[3] += pulse->GetCharge();
         testEv[testEv.size()-1].data[4] += pulse->GetTimePeak();
+
+        //added to iclude event current and bv to testEv data vector
+        testEV[testEv.size()-1].data[5] += evRoundCurrent;
+        testEV[testEv.size()-1].data[6] += evRoundBVAvg;
         
-        delete pulse;
+        delete pulse; 
     }
     testEv[testEv.size()-1].Avg();
+    //Avg() truHLED = false: for(size_t i = 0; i < data.size(); i++){data[i] /= maxCh;}
 
     for(int i = 0; i < 4; i++){
         for(int j = 0; j < 4; j++){
@@ -229,7 +368,8 @@ void DataSummary::AddTestEv(Event *&ev){
     }
 }
 
-void DataSummary::AddHLEDEv(Event *&ev){
+//changed to IEvent
+void DataSummary::AddHLEDEv(IEvent *&ev){
     vector<Double_t> amps(maxCh);
     TH1 *ledDist = new TH1F("hledDist","Amplitudes normalized to camera median",100,0,2);
 
@@ -255,8 +395,13 @@ void DataSummary::AddHLEDEv(Event *&ev){
     hledEv[hledEv.size()-1].Avg();
     hledEv[hledEv.size()-1].data[1] =  ledDist->GetStdDev();
     delete ledDist;
+    ////placement?
+    //added to iclude event current and bv to testEv data vector
+    hledEv[hledEv.size()-1].data[2] = evCurrents[0];
+    hledEv[hledEv.size()-1].data[3] = evBiasVoltages[0];
 }
 
+//reads RCLog
 void DataSummary::ReadTrThresholds(string readStr){
     ifstream logFile(readStr);
     string line, prevLine;
@@ -290,6 +435,7 @@ void DataSummary::ReadTrThresholds(string readStr){
     }
     logFile.close();
 }
+
 
 void DataSummary::FillCamera(int dp){
     if(camera){delete camera;}
@@ -338,8 +484,10 @@ void DataSummary::FillCamera(int dp){
     }
     vector<Double_t> hRange = {valSort[hRangeInd[0]],valSort[hRangeInd[1]]};
     Double_t cushion = (hRange[1] - hRange[0]) * 0.05;
-    camera->SetMinimum(hRange[0] - cushion);
-    camera->SetMaximum(hRange[1] + cushion);
+    // camera->SetMinimum(hRange[0] - cushion);
+    // camera->SetMaximum(hRange[1] + cushion);
+    camera->SetMaximum();
+    camera->SetMinimum();
 }
 
 void DataSummary::FillDt(int dp){
@@ -438,6 +586,7 @@ void DataSummary::PlotAverages(int dp){
 
     t_disp->cd(1);
     camera->Draw("colz");
+    // camera->SetMinimum();
     DrawMUSICBoundaries();
     t_disp->cd(1)->SetRightMargin(0.15);
 
@@ -473,6 +622,7 @@ void DataSummary::PlotAverages(int dp){
     leg->Draw("SAME");
 }
 
+//1st number of events plot?
 void DataSummary::FillTrig(){
     if(trig){delete trig;}
     trig = new TH1F("trig", //Name
@@ -495,6 +645,7 @@ void DataSummary::FillTrig(){
     trig->SetMarkerColor(1);
 }
 
+//2nd Trigger Rate plot?
 void DataSummary::PlotTrig(){
     if(t_disp){delete t_disp;}
     if(misc1){delete misc1;}
@@ -513,6 +664,7 @@ void DataSummary::PlotTrig(){
     misc1->Draw("P");
 }
 
+//music plots (page 2)
 void DataSummary::PlotROIMusic(){
     if(t_disp){delete t_disp;}
     if(camera){delete camera;}
@@ -531,6 +683,8 @@ void DataSummary::PlotROIMusic(){
     t_disp->Divide(2,1);
     t_disp->cd(1);
 	camera->Draw("colz");
+    // camera->SetMaximum();
+    // camera->SetMinimum();
 	DrawMUSICBoundaries();
 	camera->SetStats(0);
 	t_disp->cd(1)->SetRightMargin(0.15);
@@ -541,6 +695,7 @@ void DataSummary::PlotROIMusic(){
 	t_disp->cd(2)->SetRightMargin(0.15);
 }
 
+//Avg HLED Amp plot (page 3)
 void DataSummary::PlotFF(){
     if(t_disp){delete t_disp;}
     if(misc1){delete misc1;}
@@ -568,6 +723,7 @@ void DataSummary::PlotFF(){
     ampDist = tvar3 / tvar1;
 }
 
+//Avg Amp of HLED Events (page 4) both plots?
 void DataSummary::PlotHLED(){
     if(hledEv.size() > 0){PlotAverages(0);}
     else{
@@ -575,6 +731,7 @@ void DataSummary::PlotHLED(){
     }
 }
 
+//Avg Amp of HLED Events Normalized to median plots (page 5)
 void DataSummary::PlotHLEDNorm(){
     if(hledEv.size() > 0){PlotAverages(1);}
     else{
@@ -582,13 +739,19 @@ void DataSummary::PlotHLEDNorm(){
     }
 }
 
+///////////////////////////////////////////////////////////
+//use test events
+
+//page 6
 void DataSummary::PlotPedestal(){
-    if(testEv.size() > 0){PlotAverages(2);}
+    if(testEv.size() > 0){
+        PlotAverages(2);}
     else{
         t_disp->Clear();
     }
 }
 
+//page 7
 void DataSummary::PlotPedestalRMS(){
     if(testEv.size() > 0){PlotAverages(3);}
     else{
@@ -596,6 +759,7 @@ void DataSummary::PlotPedestalRMS(){
     }
 }
 
+//page 8
 void DataSummary::PlotAmplitude(){
     if(testEv.size() > 0){PlotAverages(4);}
     else{
@@ -603,6 +767,7 @@ void DataSummary::PlotAmplitude(){
     }
 }
 
+//page 9
 void DataSummary::PlotCharge(){
     if(testEv.size() > 0){PlotAverages(5);}
     else{
@@ -610,6 +775,7 @@ void DataSummary::PlotCharge(){
     }
 }
 
+//page 10
 void DataSummary::PlotTimePeak(){
     if(testEv.size() > 0){PlotAverages(6);}
     else{
@@ -617,6 +783,7 @@ void DataSummary::PlotTimePeak(){
     }
 }
 
+//page 11 
 void DataSummary::PlotPSF(){
     if(t_disp){delete t_disp;}
     if(misc1){delete misc1;}
@@ -698,6 +865,9 @@ void DataSummary::PlotPSF(){
 
     psfSigma = sigma;
 }
+
+////////////////////////////////////////////////////////////////////
+
 vector<vector<int>> DataSummary::GetTrTh(){
     return trTh;
 }
