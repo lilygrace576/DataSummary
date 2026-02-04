@@ -1,11 +1,13 @@
+//changed dataDir path to DataAnalysis
+
 #include "constants.h"
 
 #include <string>
 
 using namespace std;
-std::string mnt = "/storage/osg-otte1/shared/TrinityDemonstrator/";
-std::string dataDir = "/storage/osg-otte1/shared/TrinityDemonstrator/DataAnalysis/";
-std::string outDir = "/storage/osg-otte1/shared/TrinityDemonstrator/DataAnalysis/DataSummary/Output/";
+std::string mnt = "/home/lilyg/TrinityDemonstrator/";
+std::string dataDir = "/home/lilyg/TrinityDemonstrator/DataAnalysis/";
+std::string outDir = "/home/lilyg/TrinityDemonstrator/DataAnalysis/DataSummary/Output/";
 const int maxCh = 256;
 const int binLen = 120;
 const vector<string> hTitles = {"Average Amplitude of HLED Events [ADC Counts]","Average Amplitude of HLED Events normalized to median","Average Pedestal [ADC Counts]","Average Pedestal RMS [ADC Counts]","Average Amplitude [ADC Counts]","Average Charge [ADC Counts]","Average Peak Time [Time bins]"};
