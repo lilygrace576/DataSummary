@@ -12,26 +12,14 @@
 #include <TLine.h>
 #include <TLegend.h>
 #include <TPaveText.h>
-#include <IEvent.h>
-#include <TTree.h>
-#include <IUtilities.h>
-#include <ISiPM.h>
-#include <TFile.h>
 
+//added IEvent.h
+#include <IEvent.h>
 #include <Event.h>
+//
 
 #include <vector>
 #include <cmath>
-
-IUtilities *util;
-TTree *tree = 0;
-TTree *treeHLED = 0;
-IEvent *ev;
-IEvent *evHLED;
-ISiPM *sipmInfo;
-
-TFile *fO;
-TFile *file;
 
 using namespace std;
 
@@ -64,9 +52,11 @@ class DataSummary {
 		TPaveText *pt;
 		bool isData;
 		void ReadEv(string readStr);
-		bool isHLED(Event *&ev);
-		void AddTestEv(Event *&ev);
-		void AddHLEDEv(Event *&ev);
+		//changed to IEvent
+		bool isHLED(IEvent *&ev);
+		void AddTestEv(IEvent *&ev);
+		void AddHLEDEv(IEvent *&ev);
+		//
 		void ReadTrThresholds(string readStr);
 		void FillCamera(int dp);
 		void FillDt(int dp);
@@ -74,7 +64,7 @@ class DataSummary {
 		void FillTrig();
 	public:
 		TCanvas *t_disp;
-		DataSummary(char* dateStr);
+		LGDataSummary(char* dateStr);
 		bool hasData();
 		void PlotTrig();
 		void PlotROIMusic();
