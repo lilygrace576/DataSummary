@@ -13,10 +13,8 @@
 #include <TLegend.h>
 #include <TPaveText.h>
 
-//added IEvent.h
+//changed to IEvent
 #include <IEvent.h>
-#include <Event.h>
-//
 
 #include <vector>
 #include <cmath>
@@ -56,6 +54,9 @@ class DataSummary {
 		bool isHLED(IEvent *&ev);
 		void AddTestEv(IEvent *&ev);
 		void AddHLEDEv(IEvent *&ev);
+		//added
+		int HVC(Ievent *&ev);
+		int HV(Ievent *&ev);
 		//
 		void ReadTrThresholds(string readStr);
 		void FillCamera(int dp);
@@ -64,7 +65,7 @@ class DataSummary {
 		void FillTrig();
 	public:
 		TCanvas *t_disp;
-		LGDataSummary(char* dateStr);
+		DataSummary(char* dateStr);
 		bool hasData();
 		void PlotTrig();
 		void PlotROIMusic();
