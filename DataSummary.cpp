@@ -35,8 +35,8 @@ using namespace std;
 
 DataSummary::DataSummary(char* dateStr){
     //
-    evRoundCurrent = 0;
-    evRoundBVAvg = 0;
+    // evRoundCurrent = 0;
+    // evRoundBVAvg = 0;
     //
     avgEv = 0;
     ampDist = 0;
@@ -137,6 +137,7 @@ void DataSummary::ReadEv(string readStr){
                     evBiasVoltages = ev->Gethv();
 
                     if(isHLED(ev)){
+                        cout << "current: " << evCurrents[0] << endl;
                         // //B:
                         // HV(ev);
                         // HVC(ev);
@@ -183,27 +184,27 @@ void DataSummary::ReadEv(string readStr){
                 cout << "\"HLED\" Events: " << nEntries << endl;
             //EVENT LOOP
                 for(int evCount = 0; evCount < nEntries; evCount++){
-                    // //A:
-                    // vector<float> evCurrents;
-                    // vector<float> evBiasVoltages;
+                    //A:
+                    vector<float> evCurrents;
+                    vector<float> evBiasVoltages;
 
                     tree->GetEntry(evCount);
 
-                    // //Ab:
-                    // evCurrents = ev->Gethvc();
-                    // evBiasVoltages = ev->Gethv();
+                    //Ab:
+                    evCurrents = ev->Gethvc();
+                    evBiasVoltages = ev->Gethv();
 
                     if(isHLED(ev)){
-                        HV(ev);
-                        HVC(ev);
+                        // HV(ev);
+                        // HVC(ev);
                         AddTestEv(ev);
                         // //Aa:
                         // evCurrents = ev->Gethvc();
                         // evBiasVoltages = ev->Gethv();
                     }
                     else{
-                        HV(ev);
-                        HVC(ev);
+                        // HV(ev);
+                        // HVC(ev);
                         AddHLEDEv(ev);
                         // //Aa:
                         // evCurrents = ev->Gethvc();
@@ -274,31 +275,31 @@ void DataSummary::ReadEv(string readStr){
     }
 }
 
-//added
-int DataSummary::HVC(IEvent *&ev){
-    vector<float> evCurrents;
+// //added
+// int DataSummary::HVC(IEvent *&ev){
+//     vector<float> evCurrents;
 
-    evCurrents = ev->Gethvc();
+//     evCurrents = ev->Gethvc();
 
-    auto evMaxCurrent = max_element(evCurrents.begin(), evCurrents.end());
-    float evRoundCurrent = round(10 * *evMaxCurrent) / 10;
+//     auto evMaxCurrent = max_element(evCurrents.begin(), evCurrents.end());
+//     float evRoundCurrent = round(10 * *evMaxCurrent) / 10;
 
-    return evRoundCurrent;
+//     return evRoundCurrent;
     
-}
+// }
 
-int DataSummary::HV(IEvent *&ev){
-    vector<float> evBiasVoltages;
+// int DataSummary::HV(IEvent *&ev){
+//     vector<float> evBiasVoltages;
 
-    evBiasVoltages = ev->Gethv();
+//     evBiasVoltages = ev->Gethv();
     
-    float evSumV = accumulate(evBiasVoltages.begin(), evBiasVoltages.end(), 0.0);
-    float evBVAvg = evSumV / evBiasVoltages.size();
-    float evRoundBVAvg = round(10 * evBVAvg) / 10;
+//     float evSumV = accumulate(evBiasVoltages.begin(), evBiasVoltages.end(), 0.0);
+//     float evBVAvg = evSumV / evBiasVoltages.size();
+//     float evRoundBVAvg = round(10 * evBVAvg) / 10;
 
-    return evRoundBVAvg;
-}
-//
+//     return evRoundBVAvg;
+// }
+// //
 
 //changed to IEvent
 bool DataSummary::isHLED(IEvent *&ev){
@@ -337,8 +338,8 @@ void DataSummary::AddTestEv(IEvent *&ev){
         testEv[testEv.size()-1].data[4] += pulse->GetTimePeak();
 
         //added to iclude event current and bv to testEv data vector
-        testEV[testEv.size()-1].data[5] += evRoundCurrent;
-        testEV[testEv.size()-1].data[6] += evRoundBVAvg;
+        // testEV[testEv.size()-1].data[5] += evRoundCurrent;
+        // testEV[testEv.size()-1].data[6] += evRoundBVAvg;
         
         delete pulse; 
     }
@@ -397,8 +398,8 @@ void DataSummary::AddHLEDEv(IEvent *&ev){
     delete ledDist;
     ////placement?
     //added to iclude event current and bv to testEv data vector
-    hledEv[hledEv.size()-1].data[2] = evCurrents[0];
-    hledEv[hledEv.size()-1].data[3] = evBiasVoltages[0];
+    // hledEv[hledEv.size()-1].data[2] = evCurrents[0];
+    // hledEv[hledEv.size()-1].data[3] = evBiasVoltages[0];
 }
 
 //reads RCLog
