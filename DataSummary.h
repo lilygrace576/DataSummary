@@ -34,8 +34,12 @@ class DataSummary {
 		double ptMean;
 		double psfSigma;
 		vector<vector<int>> trTh;
-		vector<DtStruct> testEv;
-		vector<DtStruct> hledEv;
+		//changed and split
+		vector<DtStruct> testEv44;
+		vector<DtStruct> hledEv44;
+		vector<DtStruct> testEv41_5;
+		vector<DtStruct> hledEv41_5;
+		//
 		vector<vector<Double_t>> pixMeans;
 		vector<Double_t> meanPedRMS;
 		TF1 *fConvolutedFit;
@@ -52,11 +56,11 @@ class DataSummary {
 		void ReadEv(string readStr);
 		//changed to IEvent
 		bool isHLED(IEvent *&ev);
-		void AddTestEv(IEvent *&ev);
-		void AddHLEDEv(IEvent *&ev);
-		//added
-		int HVC(Ievent *&ev);
-		int HV(Ievent *&ev);
+		//changed and split
+		void AddTestEv44(IEvent *&ev);
+		void AddHLEDEv44(IEvent *&ev);
+		void AddTestEv41_5(IEvent *&ev);
+		void AddHLEDEv41_5(IEvent *&ev);
 		//
 		void ReadTrThresholds(string readStr);
 		void FillCamera(int dp);
@@ -70,13 +74,22 @@ class DataSummary {
 		void PlotTrig();
 		void PlotROIMusic();
 		void PlotFF();
-		void PlotHLED();
-		void PlotHLEDNorm();
-		void PlotPedestal();
-		void PlotPedestalRMS();
-		void PlotAmplitude();
-		void PlotCharge();
-		void PlotTimePeak();
+		//split
+		void PlotHLED44();
+		void PlotHLEDNorm44();
+		void PlotPedestal44();
+		void PlotPedestalRMS44();
+		void PlotAmplitude44();
+		void PlotCharge44();
+		void PlotTimePeak44();
+		void PlotHLED41_5();
+		void PlotHLEDNorm41_5();
+		void PlotPedestal41_5();
+		void PlotPedestalRMS41_5();
+		void PlotAmplitude41_5();
+		void PlotCharge41_5();
+		void PlotTimePeak41_5();
+		//
 		void PlotPSF();
 		vector<vector<int>> GetTrTh();
 		double GetAvgEv();
