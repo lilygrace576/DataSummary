@@ -36,13 +36,25 @@ using namespace std;
 DataSummary::DataSummary(char* dateStr){
     avgEv = 0;
     ampDist = 0;
-    hledMean = 0;
-    hledNMean = 0;
-    pedMean = 0;
-    pedRMSMean = 0;
-    ampMean = 0;
-    qMean = 0;
-    ptMean = 0;
+
+    //split
+    hledMean44 = 0;
+    hledNMean44 = 0;
+    pedMean44 = 0;
+    pedRMSMean44 = 0;
+    ampMean44 = 0;
+    qMean44 = 0;
+    ptMean44 = 0;
+
+    hledMean41_5 = 0;
+    hledNMean41_5 = 0;
+    pedMean41_5 = 0;
+    pedRMSMean41_5 = 0;
+    ampMean41_5 = 0;
+    qMean41_5 = 0;
+    ptMean41_5 = 0;
+    //
+    
     psfSigma = 0;
     trTh = vector<vector<int>>();
 
@@ -242,17 +254,19 @@ void DataSummary::idek(x, y){
     int hledEnt = x.size();
     int testEnt = y.size();
     for(int i = 0; i < maxCh; i++){
-        for(int j = 0; j < 2; j++){
+        //change to 4?
+        for(int j = 0; j < 4; j++){
             pixMeans[j][i] /= hledEnt;
         }
-        for(int j = 2; j < 7; j++){
+        //change to 4, 14?
+        for(int j = 4; j < 14; j++){
             pixMeans[j][i] /= testEnt;
         }
     }
     for(int i = 0; i < 16; i++){
         meanPedRMS[i] /= testEnt;
     }
-    // ?
+// ? inlcude 3 too?
     Double_t medianLED = Median(pixMeans[1]);
     for(int i = 0; i < maxCh; i++){
         pixMeans[1][i] /= medianLED;
@@ -260,22 +274,38 @@ void DataSummary::idek(x, y){
     sort(y.begin(),y.end());
     sort(x.begin(),x.end());
     avgEv = testEnt/countF;
-    //change pixMeans index (?)
-    hledMean = accumulate(pixMeans[0].begin(),pixMeans[0].end(),0.0)/maxCh;
-    hledNMean = accumulate(pixMeans[1].begin(),pixMeans[1].end(),0.0)/maxCh;
-    pedMean = accumulate(pixMeans[2].begin(),pixMeans[2].end(),0.0)/maxCh;
-    pedRMSMean = accumulate(pixMeans[3].begin(),pixMeans[3].end(),0.0)/maxCh;
-    ampMean = accumulate(pixMeans[4].begin(),pixMeans[4].end(),0.0)/maxCh;
-    qMean = accumulate(pixMeans[5].begin(),pixMeans[5].end(),0.0)/maxCh;
-    ptMean = accumulate(pixMeans[6].begin(),pixMeans[6].end(),0.0)/maxCh;
+// ? split ??
+    hledMean44 = accumulate(pixMeans[0].begin(),pixMeans[0].end(),0.0)/maxCh;
+    hledNMean44 = accumulate(pixMeans[1].begin(),pixMeans[1].end(),0.0)/maxCh;
+    pedMean44 = accumulate(pixMeans[4].begin(),pixMeans[4].end(),0.0)/maxCh;
+    pedRMSMean44 = accumulate(pixMeans[5].begin(),pixMeans[5].end(),0.0)/maxCh;
+    ampMean44 = accumulate(pixMeans[6].begin(),pixMeans[6].end(),0.0)/maxCh;
+    qMean44 = accumulate(pixMeans[7].begin(),pixMeans[7].end(),0.0)/maxCh;
+    ptMean44 = accumulate(pixMeans[8].begin(),pixMeans[8].end(),0.0)/maxCh;
 
-    return hledMean;
-    return hledNMean;
-    return pedMean;
-    return pedRMSMean;
-    return ampMean;
-    return qMean;
-    return ptMean;
+    hledMean41_5 = accumulate(pixMeans[2].begin(),pixMeans[2].end(),0.0)/maxCh;
+    hledNMean41_5 = accumulate(pixMeans[3].begin(),pixMeans[3].end(),0.0)/maxCh;
+    pedMean41_5 = accumulate(pixMeans[9].begin(),pixMeans[9].end(),0.0)/maxCh;
+    pedRMSMean41_5 = accumulate(pixMeans[10].begin(),pixMeans[10].end(),0.0)/maxCh;
+    ampMean41_5 = accumulate(pixMeans[11].begin(),pixMeans[11].end(),0.0)/maxCh;
+    qMean41_5 = accumulate(pixMeans[12].begin(),pixMeans[12].end(),0.0)/maxCh;
+    ptMean41_5 = accumulate(pixMeans[13].begin(),pixMeans[13].end(),0.0)/maxCh;
+
+    return hledMean44;
+    return hledNMean44;
+    return pedMean44;
+    return pedRMSMean44;
+    return ampMean44;
+    return qMean44;
+    return ptMean44;
+
+    return hledMean41_5;
+    return hledNMean41_5;
+    return pedMean41_5;
+    return pedRMSMean41_5;
+    return ampMean41_5;
+    return qMean41_5;
+    return ptMean41_5;
 
 }
 //
@@ -496,14 +526,14 @@ void DataSummary::FillCamera(int dp){
     for(int i = 0; i < maxCh; i++){
         int nx, ny;
         FindBin(i,&nx,&ny);
-    // ?
+// ? extra dp values matter?
         camera->SetBinContent(nx+1,ny+1,pixMeans[dp][i]);
     }
     camera->SetStats(0);
     //below finds histogram scale s.t. it includes 95% of pixels; purpose is to neglect outliers as opposed to just using min and max 
     vector<int> hRangeInd(2);
     vector<Double_t> valSort;
-// ?
+// ? extra dp values matter?
     for(auto i: pixMeans[dp]){
         valSort.push_back(i);
     }
@@ -550,15 +580,15 @@ void DataSummary::FillDt(int dp){
     if(addt){delete addt;}
     if(lin){delete lin;}
     vector<DtStruct> *thisVec;
-// change from 2 to 4 ??
+    // change from 2 to 4 ??
     int dpt = dp - (dp >= 4)*2;
-//change from 2 to 4
+    //change from 2 to 4
     if(dp<4){
-    // ?
+// ? needs to be changed/split??
         thisVec = &hledEv;
     }
     else{
-    // ?
+// ? needs to be changed/split??
         thisVec = &testEv;
     }
     //below finds y axis range s.t. it includes 99.9% of points; purpose is to neglect outliers as opposed to just using min and max 
@@ -629,7 +659,7 @@ void DataSummary::FillDt(int dp){
     }
 
     lin=new TLine((*(*thisVec).begin()).time, //x1
-    // ?
+// ? only 7 values in avgVals, could just repeat values ?
         avgVals[dp], //y1
         (*thisVec).back().time, //x2
         avgVals[dp] //y2
@@ -690,7 +720,7 @@ void DataSummary::FillTrig(){
     trig = new TH1F("trig", //Name
         "Number of Events", //Title
         
-    //combine 44 and 41.5 into one vector ?
+    //combine 44 and 41.5 into one vector ? split?
         vector<DtStruct> testEv = testEv44
         testEv.insert(testEv.end(), testEv41_5.begin(), testEv41_5.end());
 
@@ -698,7 +728,7 @@ void DataSummary::FillTrig(){
         (*testEv.begin()).time, //x axis minimum
         testEv.back().time //x axis maximum
     );
-        //
+    //
     for(auto i: testEv){
         trig->Fill(i.time);
     }
@@ -744,7 +774,7 @@ void DataSummary::PlotROIMusic(){
     camera = new TH2F("pixHeat","Highest Amplitude Pixels in Triggered Music [Counts]",16,-0.5,15.5,16,-0.5,15.5);
     ddt = new TH2F("musicHeat","Triggered Music [Counts]",8,-0.5,15.5,4,-0.5,15.5);
     
-//combine 44 and 41.5 into one vector ?
+//combine 44 and 41.5 into one vector ? split?
     vector<DtStruct> testEv = testEv44
     testEv.insert(testEv.end(), testEv41_5.begin(), testEv41_5.end());
 
@@ -785,7 +815,7 @@ void DataSummary::PlotFF(){
         1499 //x axis maximum
     );
 
-// ?
+// ? want 2 as well? split?
     for(auto i: pixMeans[0]){
         misc1->Fill(i);
     }
@@ -1035,24 +1065,47 @@ double DataSummary::GetAvgEv(){
 double DataSummary::GetAmpDist(){
     return ampDist;
 }
-double DataSummary::GetHLEDMean(){
-    return hledMean;
+
+//split
+double DataSummary::GetHLEDMean44(){
+    return hledMean44;
 }
-double DataSummary::GetHLEDNMean(){
-    return hledNMean;
+double DataSummary::GetHLEDNMean44(){
+    return hledNMean44;
 }
-double DataSummary::GetPedMean(){
-    return pedMean;
+double DataSummary::GetPedMean44(){
+    return pedMean44;
 }
-double DataSummary::GetPedRMSMean(){
-    return pedRMSMean;
+double DataSummary::GetPedRMSMean44(){
+    return pedRMSMean44;
 }
-double DataSummary::GetqMean(){
-    return qMean;
+double DataSummary::GetqMean44(){
+    return qMean44;
 }
-double DataSummary::GetPTMean(){
-    return ptMean;
+double DataSummary::GetPTMean44(){
+    return ptMean44;
 }
+
+
+double DataSummary::GetHLEDMean41_5(){
+    return hledMean41_5;
+}
+double DataSummary::GetHLEDNMean41_5(){
+    return hledNMean41_5;
+}
+double DataSummary::GetPedMean41_5(){
+    return pedMean41_5;
+}
+double DataSummary::GetPedRMSMean41_5(){
+    return pedRMSMean41_5;
+}
+double DataSummary::GetqMean41_5(){
+    return qMean41_5;
+}
+double DataSummary::GetPTMean41_5(){
+    return ptMean41_5;
+}
+//
 double DataSummary::GetPSFSigma(){
     return psfSigma;
 }
