@@ -42,27 +42,50 @@ int main(int argc, char **argv){
         ds.PlotFF();
         ds.t_disp->Print((outStr+".pdf").c_str());
         
-        ds.PlotHLED();
+        //split
+        ds.PlotHLED44();
         ds.t_disp->Print((outStr+".pdf").c_str());  
 
-        ds.PlotHLEDNorm();
+        ds.PlotHLEDNorm44();
         ds.t_disp->Print((outStr+".pdf").c_str()); 
     
-        ds.PlotPedestal();
+        ds.PlotPedestal44();
         ds.t_disp->Print((outStr+".pdf").c_str());    
 
-        ds.PlotPedestalRMS();
+        ds.PlotPedestalRMS44();
         ds.t_disp->Print((outStr+".pdf").c_str()); 
 
-        ds.PlotAmplitude();
+        ds.PlotAmplitude44();
         ds.t_disp->Print((outStr+".pdf").c_str());   
 
-        ds.PlotCharge();
+        ds.PlotCharge44();
         ds.t_disp->Print((outStr+".pdf").c_str()); 
 
-        ds.PlotTimePeak();
+        ds.PlotTimePeak44();
         ds.t_disp->Print((outStr+".pdf").c_str());   
         
+        ds.PlotHLED41_5();
+        ds.t_disp->Print((outStr+".pdf").c_str());  
+
+        ds.PlotHLEDNorm41_5();
+        ds.t_disp->Print((outStr+".pdf").c_str()); 
+    
+        ds.PlotPedestal41_5();
+        ds.t_disp->Print((outStr+".pdf").c_str());    
+
+        ds.PlotPedestalRMS41_5();
+        ds.t_disp->Print((outStr+".pdf").c_str()); 
+
+        ds.PlotAmplitude41_5();
+        ds.t_disp->Print((outStr+".pdf").c_str());   
+
+        ds.PlotCharge41_5();
+        ds.t_disp->Print((outStr+".pdf").c_str()); 
+
+        ds.PlotTimePeak41_5();
+        ds.t_disp->Print((outStr+".pdf").c_str()); 
+        //
+
         ds.PlotPSF();
         ds.t_disp->Print((outStr+".pdf").c_str()); 
 
