@@ -153,12 +153,6 @@ void DataSummary::ReadEv(string readStr){
                         else if(evRoundBVAvg == 41.5) {
                             AddTestEv41_5(ev);
                         }
-
-                        // AddTestEv(ev);
-
-                        // //Aa:
-                        // evCurrents = ev->Gethvc();
-                        // evBiasVoltages = ev->Gethv();
                     }
                     else{
                         if(evRoundBVAvg == 44) {
@@ -167,23 +161,7 @@ void DataSummary::ReadEv(string readStr){
                         else if(evRoundBVAvg == 41.5) {
                             AddHLEDEv41_5(ev);
                         }
-
-                        // AddHLEDEv(ev);
-
-                        // //Aa:
-                        // evCurrents = ev->Gethvc();
-                        // evBiasVoltages = ev->Gethv();
                     }
-
-                    // //A:
-                    // auto evMaxCurrent = max_element(evCurrents.begin(), evCurrents.end());
-                    // float evRoundCurrent = round(10 * *evMaxCurrent) / 10;
-                    // fileCurrents.push_back(evRoundCurrent);
-
-                    // float evSumV = accumulate(evBiasVoltages.begin(), evBiasVoltages.end(), 0.0);
-		            // float evBVAvg = evSumV / evBiasVoltages.size();
-                    // float evRoundBVAvg = round(10 * evBVAvg) / 10;
-                    // fileBVs.push_back(evRoundBVAvg);
 
                 } //END EVENT LOOP
                 delete ev;
@@ -227,12 +205,6 @@ void DataSummary::ReadEv(string readStr){
                         else if(evRoundBVAvg == 41.5) {
                             AddTestEv41_5(ev);
                         }
-
-                        // AddTestEv(ev);
-
-                        // //Aa:
-                        // evCurrents = ev->Gethvc();
-                        // evBiasVoltages = ev->Gethv();
                     }
                     else{
                         if(evRoundBVAvg == 44) {
@@ -242,38 +214,13 @@ void DataSummary::ReadEv(string readStr){
                             AddHLEDEv41_5(ev);
                         }
 
-                        // AddHLEDEv(ev);
-
-                        // //Aa:
-                        // evCurrents = ev->Gethvc();
-                        // evBiasVoltages = ev->Gethv();
                     }
-
-                    // //Aa:
-                    // auto evMaxCurrent = max_element(evCurrents.begin(), evCurrents.end());
-                    // float evRoundCurrent = round(10 * *evMaxCurrent) / 10;
-                    // fileCurrents.push_back(evRoundCurrent);
-
-                    // float evSumV = accumulate(evBiasVoltages.begin(), evBiasVoltages.end(), 0.0);
-		            // float evBVAvg = evSumV / evBiasVoltages.size();
-                    // float evRoundBVAvg = round(10 * evBVAvg) / 10;
-                    // fileBVs.push_back(evRoundBVAvg);
 
                 } //END EVENT LOOP
                 delete ev;
                 delete tree;
                 //CLOSE FILE
                 f0->TFile::Close();
-
-                // //A:
-                // auto maxFileCurrent = max_element(fileCurrents.begin(), fileCurrents.end());
-                // float roundFileCurrent = round(10 * *maxFileCurrent) / 10;
-                // float sumFileV = accumulate(fileBVs.begin(), fileBVs.end(), 0.0);
-                // float FileBVAvg = sumFileV / fileBVs.size();
-                // float roundFileBVAvg = round(10 * FileBVAvg) / 10;
-
-                // cout << "file current: " << roundFileCurrent << endl;
-                // cout << "file bv: " << roundFileBVAvg << endl;
    
                 
             } //END OF 2ND IF FILE LOOP
@@ -287,34 +234,6 @@ void DataSummary::ReadEv(string readStr){
         idek(hledEv44, testEv44);
         idek(hledEv41_5, testEv41_5);
         //
-
-        // int hledEnt = hledEv.size();
-        // int testEnt = testEv.size();
-        // for(int i = 0; i < maxCh; i++){
-        //     for(int j = 0; j < 2; j++){
-        //         pixMeans[j][i] /= hledEnt;
-        //     }
-        //     for(int j = 2; j < 7; j++){
-        //         pixMeans[j][i] /= testEnt;
-        //     }
-        // }
-        // for(int i = 0; i < 16; i++){
-        //     meanPedRMS[i] /= testEnt;
-        // }
-        // Double_t medianLED = Median(pixMeans[1]);
-        // for(int i = 0; i < maxCh; i++){
-        //     pixMeans[1][i] /= medianLED;
-        // }
-        // sort(testEv.begin(),testEv.end());
-        // sort(hledEv.begin(),hledEv.end());
-        // avgEv = testEnt/countF;
-        // hledMean = accumulate(pixMeans[0].begin(),pixMeans[0].end(),0.0)/maxCh;
-        // hledNMean = accumulate(pixMeans[1].begin(),pixMeans[1].end(),0.0)/maxCh;
-        // pedMean = accumulate(pixMeans[2].begin(),pixMeans[2].end(),0.0)/maxCh;
-        // pedRMSMean = accumulate(pixMeans[3].begin(),pixMeans[3].end(),0.0)/maxCh;
-        // ampMean = accumulate(pixMeans[4].begin(),pixMeans[4].end(),0.0)/maxCh;
-        // qMean = accumulate(pixMeans[5].begin(),pixMeans[5].end(),0.0)/maxCh;
-        // ptMean = accumulate(pixMeans[6].begin(),pixMeans[6].end(),0.0)/maxCh;
     }
 }
 
@@ -381,7 +300,6 @@ bool DataSummary::isHLED(IEvent *&ev){
 //split
 void DataSummary::AddTestEv44(IEvent *&ev){
     testEv44.push_back(DtStruct(false));
-    //DtStruct(false): data = vector<Double_t>(5,0.0);, truHLED = false;
     testEv44[testEv44.size()-1].time = ev->GetTBTime()*1e-8;
     Pulse *pulse;
     for(int i = 0; i < maxCh; i++){
@@ -403,8 +321,6 @@ void DataSummary::AddTestEv44(IEvent *&ev){
         delete pulse; 
     }
     testEv44[testEv44.size()-1].Avg();
-    //Avg() truHLED = false: for(size_t i = 0; i < data.size(); i++){data[i] /= maxCh;}
-
     for(int i = 0; i < 4; i++){
         for(int j = 0; j < 4; j++){
             for(int k = 8; k < 9; k++){
@@ -430,7 +346,6 @@ void DataSummary::AddTestEv44(IEvent *&ev){
 
 void DataSummary::AddTestEv41_5(IEvent *&ev){
     testEv41_5.push_back(DtStruct(false));
-    //DtStruct(false): data = vector<Double_t>(5,0.0);, truHLED = false;
     testEv41_5[testEv41_5.size()-1].time = ev->GetTBTime()*1e-8;
     Pulse *pulse;
     for(int i = 0; i < maxCh; i++){
@@ -453,8 +368,6 @@ void DataSummary::AddTestEv41_5(IEvent *&ev){
         delete pulse; 
     }
     testEv41_5[testEv41_5.size()-1].Avg();
-    //Avg() truHLED = false: for(size_t i = 0; i < data.size(); i++){data[i] /= maxCh;}
-
     for(int i = 0; i < 4; i++){
         for(int j = 0; j < 4; j++){
             for(int k = 8; k < 9; k++){
@@ -493,10 +406,8 @@ void DataSummary::AddHLEDEv44(IEvent *&ev){
         pulse = new Pulse(ev->GetSignalValue(i));
         
         // keep same
-        ////////////////////////////////////////////////
         pixMeans[0][i] += pulse->GetAmplitude();
         pixMeans[1][i] += pulse->GetAmplitude();
-        ////////////////////////////////////////////////
 
         amps[i] = pulse->GetAmplitude();
 
@@ -524,10 +435,8 @@ void DataSummary::AddHLEDEv41_5(IEvent *&ev){
         pulse = new Pulse(ev->GetSignalValue(i));
         
         //change to 2,3
-        //////////////////////////////////////////////////
         pixMeans[2][i] += pulse->GetAmplitude();
         pixMeans[3][i] += pulse->GetAmplitude();
-        /////////////////////////////////////////////////
 
         amps[i] = pulse->GetAmplitude();
 
@@ -906,7 +815,7 @@ void DataSummary::PlotHLED44(){
 }
 
 void DataSummary::PlotHLED41_5(){
-    //change to 7
+    //change to 2
     if(hledEv41_5.size() > 0){PlotAverages(2);}
     else{
         t_disp->Clear();
@@ -925,7 +834,7 @@ void DataSummary::PlotHLEDNorm44(){
 }
 
 void DataSummary::PlotHLEDNorm41_5(){
-    //change to 8
+    //change to 3
     if(hledEv41_5.size() > 0){PlotAverages(3);}
     else{
         t_disp->Clear();
@@ -937,17 +846,16 @@ void DataSummary::PlotHLEDNorm41_5(){
 //Avg Pedestal (page 6)/////////////////////////////////////////////////////////////////////
 //split
 void DataSummary::PlotPedestal44(){
-    if(testEv44.size() > 0){
-        PlotAverages(4);}
+    //change to 4
+    if(testEv44.size() > 0){PlotAverages(4);}
     else{
         t_disp->Clear();
     }
 }
 
 void DataSummary::PlotPedestal41_5(){
-    if(testEv41_5.size() > 0){
-        //changed to 9
-        PlotAverages(9);}
+    //change to 9
+    if(testEv41_5.size() > 0){ PlotAverages(9);}
     else{
         t_disp->Clear();
     }
@@ -958,6 +866,7 @@ void DataSummary::PlotPedestal41_5(){
 //Avg Ped RMS (page 7)//////////////////////////////////////////////////////////////////////
 // split
 void DataSummary::PlotPedestalRMS44(){
+    //change to 5
     if(testEv44.size() > 0){PlotAverages(5);}
     else{
         t_disp->Clear();
@@ -976,6 +885,7 @@ void DataSummary::PlotPedestalRMS41_5(){
 //Avg Amp (page 8)/////////////////////////////////////////////////////////////////////////
 // split
 void DataSummary::PlotAmplitude44(){
+    //change to 6
     if(testEv44.size() > 0){PlotAverages(6);}
     else{
         t_disp->Clear();
@@ -995,6 +905,7 @@ void DataSummary::PlotAmplitude41_5(){
 //Avg Charge (page 9)///////////////////////////////////////////////////////////////////////
 //split
 void DataSummary::PlotCharge44(){
+    //change to 7
     if(testEv44.size() > 0){PlotAverages(7);}
     else{
         t_disp->Clear();
@@ -1013,6 +924,7 @@ void DataSummary::PlotCharge41_5(){
 //Avg Peak Time (page 10)//////////////////////////////////////////////////////////////////
 //split
 void DataSummary::PlotTimePeak44(){
+    //change to 8
     if(testEv44.size() > 0){PlotAverages(8);}
     else{
         t_disp->Clear();
