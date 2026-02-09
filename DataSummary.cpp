@@ -244,17 +244,17 @@ void DataSummary::ReadEv(string readStr){
     if(countF != 0){
         isData = true;
         //
-        idek(44);
-        idek(415);
+        idek(hledEv44, testEv44);
+        idek(hledEv415, testEv415);
         //
     }
 }
 
 //added as def where x and y are either hledEv44 and testEv44 or hledEv415 and testEv415
-void DataSummary::idek(int x){
+void DataSummary::idek(vector<DtStruct> x, vector<DtStruct> y){
     // string x = to_string(x)
-    int hledEnt = (hledEv + x).size();
-    int testEnt = (testEv + y).size();
+    int hledEnt = x.size();
+    int testEnt = y.size();
     // maxCh=256 for EVERY pixel
     for(int i = 0; i < maxCh; i++){
         // for 
@@ -283,8 +283,8 @@ void DataSummary::idek(int x){
     }
 //
 
-    sort((hledEv + x).begin(),(hledEv + x).end());
-    sort((testEv + x).begin(),(testEv + x).end());
+    sort(x.begin(),x.end());
+    sort(y.begin(),y.end());
     avgEv = testEnt/countF;
 
 // split
