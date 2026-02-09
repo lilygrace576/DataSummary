@@ -46,13 +46,13 @@ DataSummary::DataSummary(char* dateStr){
     qMean44 = 0;
     ptMean44 = 0;
 
-    hledMean41_5 = 0;
-    hledNMean41_5 = 0;
-    pedMean41_5 = 0;
-    pedRMSMean41_5 = 0;
-    ampMean41_5 = 0;
-    qMean41_5 = 0;
-    ptMean41_5 = 0;
+    hledMean415 = 0;
+    hledNMean415 = 0;
+    pedMean415 = 0;
+    pedRMSMean415 = 0;
+    ampMean415 = 0;
+    qMean415 = 0;
+    ptMean415 = 0;
     //
     
     psfSigma = 0;
@@ -62,8 +62,8 @@ DataSummary::DataSummary(char* dateStr){
     hledEv44 = vector<DtStruct>();
     testEv44 = vector<DtStruct>();
     //41.5
-    hledEv41_5 = vector<DtStruct>();
-    testEv41_5 = vector<DtStruct>();
+    hledEv415 = vector<DtStruct>();
+    testEv415 = vector<DtStruct>();
 
     //change from 7 to 14 -- hledMean, hledNMean, pedMean, pedRMSMean, ampMean, qMean, ptMean (split 44 and 41.5)
     pixMeans = vector<vector<Double_t>>(14,vector<Double_t>(maxCh,0.0));
@@ -164,7 +164,7 @@ void DataSummary::ReadEv(string readStr){
                             AddTestEv44(ev);
                         }
                         else if(evRoundBVAvg == 41.5) {
-                            AddTestEv41_5(ev);
+                            AddTestEv415(ev);
                         }
                     }
                     else{
@@ -172,7 +172,7 @@ void DataSummary::ReadEv(string readStr){
                             AddHLEDEv44(ev);
                         }
                         else if(evRoundBVAvg == 41.5) {
-                            AddHLEDEv41_5(ev);
+                            AddHLEDEv415(ev);
                         }
                     }
 
@@ -216,7 +216,7 @@ void DataSummary::ReadEv(string readStr){
                             AddTestEv44(ev);
                         }
                         else if(evRoundBVAvg == 41.5) {
-                            AddTestEv41_5(ev);
+                            AddTestEv415(ev);
                         }
                     }
                     else{
@@ -224,7 +224,7 @@ void DataSummary::ReadEv(string readStr){
                             AddHLEDEv44(ev);
                         }
                         else if(evRoundBVAvg == 41.5) {
-                            AddHLEDEv41_5(ev);
+                            AddHLEDEv415(ev);
                         }
 
                     }
@@ -244,16 +244,17 @@ void DataSummary::ReadEv(string readStr){
     if(countF != 0){
         isData = true;
         //
-        idek(hledEv44, testEv44);
-        idek(hledEv41_5, testEv41_5);
+        idek(44);
+        idek(415);
         //
     }
 }
 
-//added as def where x and y are either hledEv44 and testEv44 or hledEv41_5 and testEv41_5
-void DataSummary::idek(x, y){
-    int hledEnt = x.size();
-    int testEnt = y.size();
+//added as def where x and y are either hledEv44 and testEv44 or hledEv415 and testEv415
+void DataSummary::idek(int x){
+    // string x = to_string(x)
+    int hledEnt = (hledEv + x).size();
+    int testEnt = (testEv + y).size();
     // maxCh=256 for EVERY pixel
     for(int i = 0; i < maxCh; i++){
         // for 
@@ -276,14 +277,14 @@ void DataSummary::idek(x, y){
         pixMeans[1][i] /= medianLED44;
     }
 
-    Double_t medianLED41_5 = Median(pixMeans[3]);
+    Double_t medianLED415 = Median(pixMeans[3]);
     for(int i = 0; i < maxCh; i++){
-        pixMeans[3][i] /= medianLED41_5;
+        pixMeans[3][i] /= medianLED415;
     }
 //
 
-    sort(y.begin(),y.end());
-    sort(x.begin(),x.end());
+    sort((hledEv + x).begin(),(hledEv + x).end());
+    sort((testEv + x).begin(),(testEv + x).end());
     avgEv = testEnt/countF;
 
 // split
@@ -295,13 +296,13 @@ void DataSummary::idek(x, y){
     qMean44 = accumulate(pixMeans[7].begin(),pixMeans[7].end(),0.0)/maxCh;
     ptMean44 = accumulate(pixMeans[8].begin(),pixMeans[8].end(),0.0)/maxCh;
 
-    hledMean41_5 = accumulate(pixMeans[2].begin(),pixMeans[2].end(),0.0)/maxCh;
-    hledNMean41_5 = accumulate(pixMeans[3].begin(),pixMeans[3].end(),0.0)/maxCh;
-    pedMean41_5 = accumulate(pixMeans[9].begin(),pixMeans[9].end(),0.0)/maxCh;
-    pedRMSMean41_5 = accumulate(pixMeans[10].begin(),pixMeans[10].end(),0.0)/maxCh;
-    ampMean41_5 = accumulate(pixMeans[11].begin(),pixMeans[11].end(),0.0)/maxCh;
-    qMean41_5 = accumulate(pixMeans[12].begin(),pixMeans[12].end(),0.0)/maxCh;
-    ptMean41_5 = accumulate(pixMeans[13].begin(),pixMeans[13].end(),0.0)/maxCh;
+    hledMean415 = accumulate(pixMeans[2].begin(),pixMeans[2].end(),0.0)/maxCh;
+    hledNMean415 = accumulate(pixMeans[3].begin(),pixMeans[3].end(),0.0)/maxCh;
+    pedMean415 = accumulate(pixMeans[9].begin(),pixMeans[9].end(),0.0)/maxCh;
+    pedRMSMean415 = accumulate(pixMeans[10].begin(),pixMeans[10].end(),0.0)/maxCh;
+    ampMean415 = accumulate(pixMeans[11].begin(),pixMeans[11].end(),0.0)/maxCh;
+    qMean415 = accumulate(pixMeans[12].begin(),pixMeans[12].end(),0.0)/maxCh;
+    ptMean415 = accumulate(pixMeans[13].begin(),pixMeans[13].end(),0.0)/maxCh;
 
     //need?
     return avgEv
@@ -315,13 +316,13 @@ void DataSummary::idek(x, y){
     return qMean44;
     return ptMean44;
 
-    return hledMean41_5;
-    return hledNMean41_5;
-    return pedMean41_5;
-    return pedRMSMean41_5;
-    return ampMean41_5;
-    return qMean41_5;
-    return ptMean41_5;
+    return hledMean415;
+    return hledNMean415;
+    return pedMean415;
+    return pedRMSMean415;
+    return ampMean415;
+    return qMean415;
+    return ptMean415;
 
 }
 //
@@ -390,9 +391,9 @@ void DataSummary::AddTestEv44(IEvent *&ev){
     }
 }
 
-void DataSummary::AddTestEv41_5(IEvent *&ev){
-    testEv41_5.push_back(DtStruct(false));
-    testEv41_5[testEv41_5.size()-1].time = ev->GetTBTime()*1e-8;
+void DataSummary::AddTestEv415(IEvent *&ev){
+    testEv415.push_back(DtStruct(false));
+    testEv415[testEv415.size()-1].time = ev->GetTBTime()*1e-8;
     Pulse *pulse;
     for(int i = 0; i < maxCh; i++){
         pulse = new Pulse(ev->GetSignalValue(i));
@@ -405,15 +406,15 @@ void DataSummary::AddTestEv41_5(IEvent *&ev){
         pixMeans[13][i] += pulse->GetTimePeak();
         
 
-        testEv41_5[testEv41_5.size()-1].data[0] += pulse->GetPedestal();
-        testEv41_5[testEv41_5.size()-1].data[1] += pulse->GetPedestalRMS();
-        testEv41_5[testEv41_5.size()-1].data[2] += pulse->GetAmplitude();
-        testEv41_5[testEv41_5.size()-1].data[3] += pulse->GetCharge();
-        testEv41_5[testEv41_5.size()-1].data[4] += pulse->GetTimePeak();
+        testEv415[testEv415.size()-1].data[0] += pulse->GetPedestal();
+        testEv415[testEv415.size()-1].data[1] += pulse->GetPedestalRMS();
+        testEv415[testEv415.size()-1].data[2] += pulse->GetAmplitude();
+        testEv415[testEv415.size()-1].data[3] += pulse->GetCharge();
+        testEv415[testEv415.size()-1].data[4] += pulse->GetTimePeak();
         
         delete pulse; 
     }
-    testEv41_5[testEv41_5.size()-1].Avg();
+    testEv415[testEv415.size()-1].Avg();
     for(int i = 0; i < 4; i++){
         for(int j = 0; j < 4; j++){
             for(int k = 8; k < 9; k++){
@@ -425,12 +426,12 @@ void DataSummary::AddTestEv41_5(IEvent *&ev){
     }
 
     int MUSICpos = MUSICmap[(ev->GetROIMusicID())[0]];
-    testEv41_5[testEv41_5.size()-1].pTrig = MUSICpos*8;
+    testEv415[testEv415.size()-1].pTrig = MUSICpos*8;
     Double_t ampMax = 0;
     for(int i = 0; i < 8; i++){
         pulse = new Pulse(ev->GetSignalValue(MUSICpos*8 + i));
         if(pulse->GetAmplitude() > ampMax){
-            testEv41_5[testEv41_5.size()-1].pTrig = MUSICpos*8 + i;
+            testEv415[testEv415.size()-1].pTrig = MUSICpos*8 + i;
             ampMax = pulse->GetAmplitude();
         }
         delete pulse;
@@ -470,12 +471,12 @@ void DataSummary::AddHLEDEv44(IEvent *&ev){
     delete ledDist;
 }
 
-void DataSummary::AddHLEDEv41_5(IEvent *&ev){
+void DataSummary::AddHLEDEv415(IEvent *&ev){
     vector<Double_t> amps(maxCh);
     TH1 *ledDist = new TH1F("hledDist","Amplitudes normalized to camera median",100,0,2);
 
-    hledEv41_5.push_back(DtStruct(true));
-    hledEv41_5[hledEv41_5.size()-1].time = ev->GetTBTime()*1e-8;
+    hledEv415.push_back(DtStruct(true));
+    hledEv415[hledEv415.size()-1].time = ev->GetTBTime()*1e-8;
     Pulse *pulse;
     for(int i = 0; i < maxCh; i++){
         pulse = new Pulse(ev->GetSignalValue(i));
@@ -486,7 +487,7 @@ void DataSummary::AddHLEDEv41_5(IEvent *&ev){
 
         amps[i] = pulse->GetAmplitude();
 
-        hledEv41_5[hledEv41_5.size()-1].data[0] += pulse->GetAmplitude();
+        hledEv415[hledEv415.size()-1].data[0] += pulse->GetAmplitude();
         
         delete pulse;
     }
@@ -494,8 +495,8 @@ void DataSummary::AddHLEDEv41_5(IEvent *&ev){
     for(int i = 0; i < maxCh; i++){
         ledDist->Fill(amps[i]/medianLED);
     }
-    hledEv41_5[hledEv41_5.size()-1].Avg();
-    hledEv41_5[hledEv41_5.size()-1].data[1] =  ledDist->GetStdDev();
+    hledEv415[hledEv415.size()-1].Avg();
+    hledEv415[hledEv415.size()-1].data[1] =  ledDist->GetStdDev();
     delete ledDist;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -735,7 +736,7 @@ void DataSummary::FillTrig(){
     if(trig){delete trig;}
 //combine 44 and 41.5 into one vector ?
     vector<DtStruct> testEv = testEv44
-    testEv.insert(testEv.end(), testEv41_5.begin(), testEv41_5.end());
+    testEv.insert(testEv.end(), testEv415.begin(), testEv415.end());
     
     trig = new TH1F("trig", //Name
         "Number of Events", //Title
@@ -791,7 +792,7 @@ void DataSummary::PlotROIMusic(){
     
 //combine 44 and 41.5 into one vector ?
     vector<DtStruct> testEv = testEv44
-    testEv.insert(testEv.end(), testEv41_5.begin(), testEv41_5.end());
+    testEv.insert(testEv.end(), testEv415.begin(), testEv415.end());
 
     for(auto i: testEv){
         int nx, ny;
@@ -850,7 +851,7 @@ void DataSummary::PlotFF44(){
     ampDist = tvar3 / tvar1;
 }
 
-void DataSummary::PlotFF41_5(){
+void DataSummary::PlotFF415(){
     if(t_disp){delete t_disp;}
     if(misc1){delete misc1;}
     t_disp = new TCanvas("Display","DataSummary",1250,1000);
@@ -891,9 +892,9 @@ void DataSummary::PlotHLED44(){
     }
 }
 
-void DataSummary::PlotHLED41_5(){
+void DataSummary::PlotHLED415(){
     //change to 2
-    if(hledEv41_5.size() > 0){PlotAverages(2);}
+    if(hledEv415.size() > 0){PlotAverages(2);}
     else{
         t_disp->Clear();
     }
@@ -910,9 +911,9 @@ void DataSummary::PlotHLEDNorm44(){
     }
 }
 
-void DataSummary::PlotHLEDNorm41_5(){
+void DataSummary::PlotHLEDNorm415(){
     //change to 3
-    if(hledEv41_5.size() > 0){PlotAverages(3);}
+    if(hledEv415.size() > 0){PlotAverages(3);}
     else{
         t_disp->Clear();
     }
@@ -930,9 +931,9 @@ void DataSummary::PlotPedestal44(){
     }
 }
 
-void DataSummary::PlotPedestal41_5(){
+void DataSummary::PlotPedestal415(){
     //change to 9
-    if(testEv41_5.size() > 0){ PlotAverages(9);}
+    if(testEv415.size() > 0){ PlotAverages(9);}
     else{
         t_disp->Clear();
     }
@@ -950,9 +951,9 @@ void DataSummary::PlotPedestalRMS44(){
     }
 }
 
-void DataSummary::PlotPedestalRMS41_5(){
+void DataSummary::PlotPedestalRMS415(){
     //changed to 10
-    if(testEv41_5.size() > 0){PlotAverages(10);}
+    if(testEv415.size() > 0){PlotAverages(10);}
     else{
         t_disp->Clear();
     }
@@ -969,9 +970,9 @@ void DataSummary::PlotAmplitude44(){
     }
 }
 
-void DataSummary::PlotAmplitude41_5(){
+void DataSummary::PlotAmplitude415(){
     //changed to 11
-    if(testEv41_5.size() > 0){PlotAverages(11);}
+    if(testEv415.size() > 0){PlotAverages(11);}
     else{
         t_disp->Clear();
     }
@@ -989,9 +990,9 @@ void DataSummary::PlotCharge44(){
     }
 }
 
-void DataSummary::PlotCharge41_5(){
+void DataSummary::PlotCharge415(){
     //cahnged to 12
-    if(testEv41_5.size() > 0){PlotAverages(12);}
+    if(testEv415.size() > 0){PlotAverages(12);}
     else{
         t_disp->Clear();
     }
@@ -1008,9 +1009,9 @@ void DataSummary::PlotTimePeak44(){
     }
 }
 
-void DataSummary::PlotTimePeak41_5(){
+void DataSummary::PlotTimePeak415(){
     //changed to 13
-    if(testEv41_5.size() > 0){PlotAverages(13);}
+    if(testEv415.size() > 0){PlotAverages(13);}
     else{
         t_disp->Clear();
     }
@@ -1134,23 +1135,23 @@ double DataSummary::GetPTMean44(){
 }
 
 
-double DataSummary::GetHLEDMean41_5(){
-    return hledMean41_5;
+double DataSummary::GetHLEDMean415(){
+    return hledMean415;
 }
-double DataSummary::GetHLEDNMean41_5(){
-    return hledNMean41_5;
+double DataSummary::GetHLEDNMean415(){
+    return hledNMean415;
 }
-double DataSummary::GetPedMean41_5(){
-    return pedMean41_5;
+double DataSummary::GetPedMean415(){
+    return pedMean415;
 }
-double DataSummary::GetPedRMSMean41_5(){
-    return pedRMSMean41_5;
+double DataSummary::GetPedRMSMean415(){
+    return pedRMSMean415;
 }
-double DataSummary::GetqMean41_5(){
-    return qMean41_5;
+double DataSummary::GetqMean415(){
+    return qMean415;
 }
-double DataSummary::GetPTMean41_5(){
-    return ptMean41_5;
+double DataSummary::GetPTMean415(){
+    return ptMean415;
 }
 //
 double DataSummary::GetPSFSigma(){
