@@ -78,7 +78,7 @@ class DataSummary {
 		void AddHLEDEv415(IEvent *&ev);
 		//
 		//added
-		void idek(int x);
+		void idek(vector<DtStruct> x, vector<DtStruct> y);
 
 		void ReadTrThresholds(string readStr);
 		void FillCamera(int dp);
