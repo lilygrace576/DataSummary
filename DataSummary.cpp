@@ -65,9 +65,10 @@ DataSummary::DataSummary(char* dateStr){
     hledEv41_5 = vector<DtStruct>();
     testEv41_5 = vector<DtStruct>();
 
-    //change from 7 to 14
+    //change from 7 to 14 -- hledMean, hledNMean, pedMean, pedRMSMean, ampMean, qMean, ptMean (split 44 and 41.5)
     pixMeans = vector<vector<Double_t>>(14,vector<Double_t>(maxCh,0.0));
 
+    // 16 = number of pixels per SIAB
     meanPedRMS = vector<Double_t>(16,0.0);
     fConvolutedFit = new TF1();
     camera = new TH2F();
@@ -253,8 +254,10 @@ void DataSummary::ReadEv(string readStr){
 void DataSummary::idek(x, y){
     int hledEnt = x.size();
     int testEnt = y.size();
+    // maxCh=256 for EVERY pixel
     for(int i = 0; i < maxCh; i++){
-        //change to 4?
+        // for 
+        //change from 2 to 4?
         for(int j = 0; j < 4; j++){
             pixMeans[j][i] /= hledEnt;
         }
@@ -266,15 +269,24 @@ void DataSummary::idek(x, y){
     for(int i = 0; i < 16; i++){
         meanPedRMS[i] /= testEnt;
     }
-// ? inlcude 3 too?
-    Double_t medianLED = Median(pixMeans[1]);
+
+// split?
+    Double_t medianLED44 = Median(pixMeans[1]);
     for(int i = 0; i < maxCh; i++){
-        pixMeans[1][i] /= medianLED;
+        pixMeans[1][i] /= medianLED44;
     }
+
+    Double_t medianLED41_5 = Median(pixMeans[3]);
+    for(int i = 0; i < maxCh; i++){
+        pixMeans[3][i] /= medianLED41_5;
+    }
+//
+
     sort(y.begin(),y.end());
     sort(x.begin(),x.end());
     avgEv = testEnt/countF;
-// ? split ??
+
+// split
     hledMean44 = accumulate(pixMeans[0].begin(),pixMeans[0].end(),0.0)/maxCh;
     hledNMean44 = accumulate(pixMeans[1].begin(),pixMeans[1].end(),0.0)/maxCh;
     pedMean44 = accumulate(pixMeans[4].begin(),pixMeans[4].end(),0.0)/maxCh;
@@ -291,6 +303,10 @@ void DataSummary::idek(x, y){
     qMean41_5 = accumulate(pixMeans[12].begin(),pixMeans[12].end(),0.0)/maxCh;
     ptMean41_5 = accumulate(pixMeans[13].begin(),pixMeans[13].end(),0.0)/maxCh;
 
+    //need?
+    return avgEv
+    //
+    
     return hledMean44;
     return hledNMean44;
     return pedMean44;
@@ -659,7 +675,7 @@ void DataSummary::FillDt(int dp){
     }
 
     lin=new TLine((*(*thisVec).begin()).time, //x1
-// ? only 7 values in avgVals, could just repeat values ?
+// ? only 7 values in avgVals, could just repeat values ? - did this
         avgVals[dp], //y1
         (*thisVec).back().time, //x2
         avgVals[dp] //y2
@@ -717,13 +733,12 @@ void DataSummary::PlotAverages(int dp){
 //number of events (1st page)////////////////////////////////////////////////////////////////
 void DataSummary::FillTrig(){
     if(trig){delete trig;}
+//combine 44 and 41.5 into one vector ?
+    vector<DtStruct> testEv = testEv44
+    testEv.insert(testEv.end(), testEv41_5.begin(), testEv41_5.end());
+    
     trig = new TH1F("trig", //Name
         "Number of Events", //Title
-        
-    //combine 44 and 41.5 into one vector ? split?
-        vector<DtStruct> testEv = testEv44
-        testEv.insert(testEv.end(), testEv41_5.begin(), testEv41_5.end());
-
         (testEv.back().time - (*testEv.begin()).time)/binLen, //number of bins on x axis
         (*testEv.begin()).time, //x axis minimum
         testEv.back().time //x axis maximum
@@ -774,7 +789,7 @@ void DataSummary::PlotROIMusic(){
     camera = new TH2F("pixHeat","Highest Amplitude Pixels in Triggered Music [Counts]",16,-0.5,15.5,16,-0.5,15.5);
     ddt = new TH2F("musicHeat","Triggered Music [Counts]",8,-0.5,15.5,4,-0.5,15.5);
     
-//combine 44 and 41.5 into one vector ? split?
+//combine 44 and 41.5 into one vector ?
     vector<DtStruct> testEv = testEv44
     testEv.insert(testEv.end(), testEv41_5.begin(), testEv41_5.end());
 
@@ -804,21 +819,53 @@ void DataSummary::PlotROIMusic(){
 
 
 //Distrib of Daily AVG HLED Amp (page 3)////////////////////////////////////////////////////////////
-void DataSummary::PlotFF(){
+//split?
+void DataSummary::PlotFF44(){
     if(t_disp){delete t_disp;}
     if(misc1){delete misc1;}
     t_disp = new TCanvas("Display","DataSummary",1250,1000);
     misc1 = new TH1F("misc1", //Name
-        "Distribution of Daily Average HLED Amplitude normalized to median", //Title
+        "Distribution of Daily Average 44V HLED Amplitude normalized to median", //Title
         150, //number of bins on x axis
         0, //x axis minimum
         1499 //x axis maximum
     );
 
-// ? want 2 as well? split?
+// include 2? split?
     for(auto i: pixMeans[0]){
         misc1->Fill(i);
     }
+
+    misc1->GetXaxis()->SetTitle("HLED signal amplitude normalized to median");
+    misc1->GetYaxis()->SetTitle("Number of pixels");
+    gStyle->SetOptStat(1100);
+    t_disp->cd();
+    misc1->Draw("hist");
+
+    double stats[4];
+    misc1->GetStats(stats);
+    double tvar1 = (stats[0] > 0) ? (stats[2] / stats[0]) : 0.0;
+    double tvar2 = (stats[0] > 0) ? (stats[3] / stats[0] - tvar1 * tvar1) : 0.0;
+    double tvar3 = (tvar2 > 0) ? sqrt(tvar2) : 0.0;
+    ampDist = tvar3 / tvar1;
+}
+
+void DataSummary::PlotFF41_5(){
+    if(t_disp){delete t_disp;}
+    if(misc1){delete misc1;}
+    t_disp = new TCanvas("Display","DataSummary",1250,1000);
+    misc1 = new TH1F("misc1", //Name
+        "Distribution of Daily Average 41.5V HLED Amplitude normalized to median", //Title
+        150, //number of bins on x axis
+        0, //x axis minimum
+        1499 //x axis maximum
+    );
+
+//changed to 2
+    for(auto i: pixMeans[2]){
+        misc1->Fill(i);
+    }
+
     misc1->GetXaxis()->SetTitle("HLED signal amplitude normalized to median");
     misc1->GetYaxis()->SetTitle("Number of pixels");
     gStyle->SetOptStat(1100);
