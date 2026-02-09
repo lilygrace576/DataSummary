@@ -43,7 +43,7 @@ int main(int argc, char **argv){
         ds.PlotFF44();
         ds.t_disp->Print((outStr+".pdf").c_str());
 
-        ds.PlotFF41_5();
+        ds.PlotFF415();
         ds.t_disp->Print((outStr+".pdf").c_str());
         
         //split
@@ -68,25 +68,25 @@ int main(int argc, char **argv){
         ds.PlotTimePeak44();
         ds.t_disp->Print((outStr+".pdf").c_str());   
         
-        ds.PlotHLED41_5();
+        ds.PlotHLED415();
         ds.t_disp->Print((outStr+".pdf").c_str());  
 
-        ds.PlotHLEDNorm41_5();
+        ds.PlotHLEDNorm415();
         ds.t_disp->Print((outStr+".pdf").c_str()); 
     
-        ds.PlotPedestal41_5();
+        ds.PlotPedestal415();
         ds.t_disp->Print((outStr+".pdf").c_str());    
 
-        ds.PlotPedestalRMS41_5();
+        ds.PlotPedestalRMS415();
         ds.t_disp->Print((outStr+".pdf").c_str()); 
 
-        ds.PlotAmplitude41_5();
+        ds.PlotAmplitude415();
         ds.t_disp->Print((outStr+".pdf").c_str());   
 
-        ds.PlotCharge41_5();
+        ds.PlotCharge415();
         ds.t_disp->Print((outStr+".pdf").c_str()); 
 
-        ds.PlotTimePeak41_5();
+        ds.PlotTimePeak415();
         ds.t_disp->Print((outStr+".pdf").c_str()); 
         //
 
