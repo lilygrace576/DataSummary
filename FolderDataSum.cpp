@@ -39,7 +39,11 @@ int main(int argc, char **argv){
         ds.PlotROIMusic();
         ds.t_disp->Print((outStr+".pdf").c_str());
 
-        ds.PlotFF();
+        //split(?)
+        ds.PlotFF44();
+        ds.t_disp->Print((outStr+".pdf").c_str());
+
+        ds.PlotFF41_5();
         ds.t_disp->Print((outStr+".pdf").c_str());
         
         //split
