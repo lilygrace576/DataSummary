@@ -35,13 +35,13 @@ class DataSummary {
 		double qMean44;
 		double ptMean44;
 
-		double hledMean41_5;
-		double hledNMean41_5;
-		double pedMean41_5;
-		double pedRMSMean41_5;
-		double ampMean41_5;
-		double qMean41_5;
-		double ptMean41_5;
+		double hledMean415;
+		double hledNMean415;
+		double pedMean415;
+		double pedRMSMean415;
+		double ampMean415;
+		double qMean415;
+		double ptMean415;
 		//
 
 		double psfSigma;
@@ -50,8 +50,8 @@ class DataSummary {
 		//split
 		vector<DtStruct> testEv44;
 		vector<DtStruct> hledEv44;
-		vector<DtStruct> testEv41_5;
-		vector<DtStruct> hledEv41_5;
+		vector<DtStruct> testEv415;
+		vector<DtStruct> hledEv415;
 		//
 
 		vector<vector<Double_t>> pixMeans;
@@ -74,9 +74,11 @@ class DataSummary {
 		//changed and split
 		void AddTestEv44(IEvent *&ev);
 		void AddHLEDEv44(IEvent *&ev);
-		void AddTestEv41_5(IEvent *&ev);
-		void AddHLEDEv41_5(IEvent *&ev);
+		void AddTestEv415(IEvent *&ev);
+		void AddHLEDEv415(IEvent *&ev);
 		//
+		//added
+		void idek(int x);
 
 		void ReadTrThresholds(string readStr);
 		void FillCamera(int dp);
@@ -92,7 +94,7 @@ class DataSummary {
 
 		//split(?)
 		void PlotFF44();
-		void PlotFF41_5();
+		void PlotFF415();
 
 		//split
 		void PlotHLED44();
@@ -103,13 +105,13 @@ class DataSummary {
 		void PlotCharge44();
 		void PlotTimePeak44();
 
-		void PlotHLED41_5();
-		void PlotHLEDNorm41_5();
-		void PlotPedestal41_5();
-		void PlotPedestalRMS41_5();
-		void PlotAmplitude41_5();
-		void PlotCharge41_5();
-		void PlotTimePeak41_5();
+		void PlotHLED415();
+		void PlotHLEDNorm415();
+		void PlotPedestal415();
+		void PlotPedestalRMS415();
+		void PlotAmplitude415();
+		void PlotCharge415();
+		void PlotTimePeak415();
 		//
 
 		void PlotPSF();
@@ -126,12 +128,12 @@ class DataSummary {
 		double GetPTMean44();
 		double GetPSFSigma44();
 
-		double GetHLEDMean41_5();
-		double GetHLEDNMean41_5();
-		double GetPedMean41_5();
-		double GetPedRMSMean41_5();
-		double GetqMean41_5();
-		double GetPTMean41_5();
+		double GetHLEDMean415();
+		double GetHLEDNMean415();
+		double GetPedMean415();
+		double GetPedRMSMean415();
+		double GetqMean415();
+		double GetPTMean415();
 		//
 
 		double GetPSFSigma();
