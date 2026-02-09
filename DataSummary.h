@@ -25,13 +25,25 @@ class DataSummary {
 	private:
 		double avgEv;
 		double ampDist;
-		double hledMean;
-		double hledNMean;
-		double pedMean;
-		double pedRMSMean;
-		double ampMean;
-		double qMean;
-		double ptMean;
+
+		//split
+		double hledMean44;
+		double hledNMean44;
+		double pedMean44;
+		double pedRMSMean44;
+		double ampMean44;
+		double qMean44;
+		double ptMean44;
+
+		double hledMean41_5;
+		double hledNMean41_5;
+		double pedMean41_5;
+		double pedRMSMean41_5;
+		double ampMean41_5;
+		double qMean41_5;
+		double ptMean41_5;
+		//
+
 		double psfSigma;
 		vector<vector<int>> trTh;
 
@@ -77,7 +89,10 @@ class DataSummary {
 		bool hasData();
 		void PlotTrig();
 		void PlotROIMusic();
-		void PlotFF();
+
+		//split(?)
+		void PlotFF44();
+		void PlotFF41_5();
 
 		//split
 		void PlotHLED44();
