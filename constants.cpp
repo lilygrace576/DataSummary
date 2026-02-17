@@ -23,7 +23,9 @@ const vector<string> dTitles = {"Average Amplitude of HLED Events 44V [ADC Count
 
 // 7 vals - need to change for dp - just repeat these? -- avgVales for hledMean etc?
 // const vector<double> avgVals = {1100,0.15,3783,26,87,229,249};
-const vector<double> avgVals = {1100,0.15,3783,26,87,229,249,1100,0.15,3783,26,87,229,249};
+// const vector<double> avgVals = {1100,0.15,3783,26,87,229,249,1100,0.15,3783,26,87,229,249};
+//                              0    1     2    3   4    5  6   7   8   9   10 11 12  23
+const vector<double> avgVals = {1100,0.15,1100,0.15,3783,26,87,229,249,3783,26,87,229,249};
 
 const vector<int> MUSICmap = {3,2,11,10,19,18,27,26,7,6,15,14,23,22,31,30,1,0,9,8,17,16,25,24,5,4,13,12,21,20,29,28};
 const string trStr = "200000ffff250300"; //first 16 bits of 18 bit hex command for setting trigger threshold, last 2 bits are the threshold value
