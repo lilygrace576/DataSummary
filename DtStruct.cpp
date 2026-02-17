@@ -14,7 +14,7 @@ DtStruct::DtStruct(bool isHLED) {
     if(isHLED){
         truHLED = true;
         //changed from 2 to 4
-        data = vector<Double_t>(4,0.0);
+        data = vector<Double_t>(2,0.0);
         pTrig = -1;
     }
     else{
