@@ -597,8 +597,8 @@ void DataSummary::FillDt(int dp){
     if(addt){delete addt;}
     if(lin){delete lin;}
     vector<DtStruct> *thisVec;
-    // change from 2 to 4 ??
-    int dpt = dp - (dp >= 4)*2;
+    // need to change?
+    int dpt = dp - (dp >= 2)*2;
     //change from 2 to 4
     if(dp<4){
 // ? needs to be changed/split??
