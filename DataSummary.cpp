@@ -597,16 +597,23 @@ void DataSummary::FillDt(int dp){
     if(addt){delete addt;}
     if(lin){delete lin;}
     vector<DtStruct> *thisVec;
-    // need to change?
-    int dpt = dp - (dp >= 2)*2;
-    //change from 2 to 4
-    if(dp<4){
-// ? needs to be changed/split??
-        thisVec = &hledEv;
+    // int dpt = dp - (dp >= 2)*2;
+//change
+    if(dp<2){
+        thisVec = &hledEv44;
+        dpt = dp;
     }
-    else{
-// ? needs to be changed/split??
-        thisVec = &testEv;
+    else if(dp >= 2 && dp<4){
+        thisVec = &hledEv415;
+        dpt = dp - 2;
+    }
+    else if(dp >= 4 && dp<9){
+        thisVec = &testEv44;
+        dpt = dp - 4;
+    }
+    else if(dp >= 9 && dp<14){
+        thisVec = &testEv415;
+        dpt = dp - 9;
     }
     //below finds y axis range s.t. it includes 99.9% of points; purpose is to neglect outliers as opposed to just using min and max 
     vector<int> yRangeInd(2);
