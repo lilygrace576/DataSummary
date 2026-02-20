@@ -34,7 +34,11 @@
 using namespace std;
 
 DataSummary::DataSummary(char* dateStr){
-    avgEv = 0;
+    //split
+    avgEv44 = 0;
+    avgEv415 = 0;
+
+    //split?
     ampDist = 0;
 
     //split
@@ -69,7 +73,11 @@ DataSummary::DataSummary(char* dateStr){
     pixMeans = vector<vector<Double_t>>(14,vector<Double_t>(maxCh,0.0));
 
     // 16 = number of pixels per SIAB
-    meanPedRMS = vector<Double_t>(16,0.0);
+    //split
+    meanPedRMS44 = vector<Double_t>(16,0.0);
+    meanPedRMS415 = vector<Double_t>(16,0.0);
+    //
+
     fConvolutedFit = new TF1();
     camera = new TH2F();
     ddt = new TH2F();
@@ -121,9 +129,9 @@ void DataSummary::ReadEv(string readStr){
                     cout << "File is a zombie...skipping" << endl;
                     continue;
                 }
-                //A: intialize after opening file
-                vector<float> fileCurrents;
-                vector<float> fileBVs;
+                // //A: intialize after opening file
+                // vector<float> fileCurrents;
+                // vector<float> fileBVs;
 
         // TEST EVENTS
                 tree = (TTree*)f0->Get("Test");
@@ -143,17 +151,17 @@ void DataSummary::ReadEv(string readStr){
             //EVENT LOOP
                 for(int evCount = 0; evCount < nEntries; evCount++){
                     //A:
-                    vector<float> evCurrents;
+                    // vector<float> evCurrents;
                     vector<float> evBiasVoltages;
 
                     tree->GetEntry(evCount);
 
                     //Ab:
-                    evCurrents = ev->Gethvc();
+                    // evCurrents = ev->Gethvc();
                     evBiasVoltages = ev->Gethv();
 
-                    auto evMaxCurrent = max_element(evCurrents.begin(), evCurrents.end());
-                    float evRoundCurrent = round(10 * *evMaxCurrent) / 10;
+                    // auto evMaxCurrent = max_element(evCurrents.begin(), evCurrents.end());
+                    // float evRoundCurrent = round(10 * *evMaxCurrent) / 10;
 
                     float evSumV = accumulate(evBiasVoltages.begin(), evBiasVoltages.end(), 0.0);
 		            float evBVAvg = evSumV / evBiasVoltages.size();
@@ -195,17 +203,17 @@ void DataSummary::ReadEv(string readStr){
             //EVENT LOOP
                 for(int evCount = 0; evCount < nEntries; evCount++){
                     //A:
-                    vector<float> evCurrents;
+                    // vector<float> evCurrents;
                     vector<float> evBiasVoltages;
 
                     tree->GetEntry(evCount);
 
                     //Ab:
-                    evCurrents = ev->Gethvc();
+                    // evCurrents = ev->Gethvc();
                     evBiasVoltages = ev->Gethv();
 
-                    auto evMaxCurrent = max_element(evCurrents.begin(), evCurrents.end());
-                    float evRoundCurrent = round(10 * *evMaxCurrent) / 10;
+                    // auto evMaxCurrent = max_element(evCurrents.begin(), evCurrents.end());
+                    // float evRoundCurrent = round(10 * *evMaxCurrent) / 10;
 
                     float evSumV = accumulate(evBiasVoltages.begin(), evBiasVoltages.end(), 0.0);
 		            float evBVAvg = evSumV / evBiasVoltages.size();
@@ -243,89 +251,75 @@ void DataSummary::ReadEv(string readStr){
 
     if(countF != 0){
         isData = true;
-        //
-        idek(hledEv44, testEv44);
-        idek(hledEv415, testEv415);
-        //
+
+        int hledEnt44 = hledEv44.size();
+        int testEnt44 = testEv44.size();
+        int hledEnt415 = hledEv415.size();
+        int testEnt415 = testEv415.size();
+
+        for(int i = 0; i < maxCh; i++){
+            //split
+            for(int j = 0; j < 2; j++){
+                pixMeans[j][i] /= hledEnt44;
+            }
+            for(int j = 2; j < 4; j++){
+                pixMeans[j][i] /= hledEnt415;
+            }
+            for(int j = 4; j < 9; j++){
+                pixMeans[j][i] /= testEnt44; 
+            }
+            for(int j = 9; j < 14; j++){
+                pixMeans[j][i] /= testEnt415;
+            }
+        }
+
+        //split
+        for(int i = 0; i < 16; i++){
+            meanPedRMS44[i] /= testEnt44;
+            meanPedRMS415[i] /= testEnt415;
+        }
+
+        //split
+        Double_t medianLED44 = Median(pixMeans[1]);
+        for(int i = 0; i < maxCh; i++){
+            pixMeans[1][i] /= medianLED44;
+        }
+
+        Double_t medianLED415 = Median(pixMeans[3]);
+        for(int i = 0; i < maxCh; i++){
+            pixMeans[3][i] /= medianLED415;
+        }
+
+        //split
+        sort(hledEv44.begin(),hledEv44.end());
+        sort(testEv44.begin(),testEv44.end());
+        sort(hledEv415.begin(),hledEv415.end());
+        sort(testEv415.begin(),testEv415.end());
+
+        //split
+        avgEv44 = testEnt44/countF;
+        avgEv415 = testEnt415/countF;
+
+        //split
+        hledMean44 = accumulate(pixMeans[0].begin(),pixMeans[0].end(),0.0)/maxCh;
+        hledNMean44 = accumulate(pixMeans[1].begin(),pixMeans[1].end(),0.0)/maxCh;
+        pedMean44 = accumulate(pixMeans[4].begin(),pixMeans[4].end(),0.0)/maxCh;
+        pedRMSMean44 = accumulate(pixMeans[5].begin(),pixMeans[5].end(),0.0)/maxCh;
+        ampMean44 = accumulate(pixMeans[6].begin(),pixMeans[6].end(),0.0)/maxCh;
+        qMean44 = accumulate(pixMeans[7].begin(),pixMeans[7].end(),0.0)/maxCh;
+        ptMean44 = accumulate(pixMeans[8].begin(),pixMeans[8].end(),0.0)/maxCh;
+
+        hledMean415 = accumulate(pixMeans[2].begin(),pixMeans[2].end(),0.0)/maxCh;
+        hledNMean415 = accumulate(pixMeans[3].begin(),pixMeans[3].end(),0.0)/maxCh;
+        pedMean415 = accumulate(pixMeans[9].begin(),pixMeans[9].end(),0.0)/maxCh;
+        pedRMSMean415 = accumulate(pixMeans[10].begin(),pixMeans[10].end(),0.0)/maxCh;
+        ampMean415 = accumulate(pixMeans[11].begin(),pixMeans[11].end(),0.0)/maxCh;
+        qMean415 = accumulate(pixMeans[12].begin(),pixMeans[12].end(),0.0)/maxCh;
+        ptMean415 = accumulate(pixMeans[13].begin(),pixMeans[13].end(),0.0)/maxCh;
+
     }
 }
 
-//added as def where x and y are either hledEv44 and testEv44 or hledEv415 and testEv415
-void DataSummary::idek(vector<DtStruct> x, vector<DtStruct> y){
-    // string x = to_string(x)
-    int hledEnt = x.size();
-    int testEnt = y.size();
-    // maxCh=256 for EVERY pixel
-    for(int i = 0; i < maxCh; i++){
-        // for 
-        //change from 2 to 4?
-        for(int j = 0; j < 4; j++){
-            pixMeans[j][i] /= hledEnt;
-        }
-        //change to 4, 14?
-        for(int j = 4; j < 14; j++){
-            pixMeans[j][i] /= testEnt;
-        }
-    }
-    for(int i = 0; i < 16; i++){
-        meanPedRMS[i] /= testEnt;
-    }
-
-// split?
-    Double_t medianLED44 = Median(pixMeans[1]);
-    for(int i = 0; i < maxCh; i++){
-        pixMeans[1][i] /= medianLED44;
-    }
-
-    Double_t medianLED415 = Median(pixMeans[3]);
-    for(int i = 0; i < maxCh; i++){
-        pixMeans[3][i] /= medianLED415;
-    }
-//
-
-    sort(x.begin(),x.end());
-    sort(y.begin(),y.end());
-    avgEv = testEnt/countF;
-
-// split
-    hledMean44 = accumulate(pixMeans[0].begin(),pixMeans[0].end(),0.0)/maxCh;
-    hledNMean44 = accumulate(pixMeans[1].begin(),pixMeans[1].end(),0.0)/maxCh;
-    pedMean44 = accumulate(pixMeans[4].begin(),pixMeans[4].end(),0.0)/maxCh;
-    pedRMSMean44 = accumulate(pixMeans[5].begin(),pixMeans[5].end(),0.0)/maxCh;
-    ampMean44 = accumulate(pixMeans[6].begin(),pixMeans[6].end(),0.0)/maxCh;
-    qMean44 = accumulate(pixMeans[7].begin(),pixMeans[7].end(),0.0)/maxCh;
-    ptMean44 = accumulate(pixMeans[8].begin(),pixMeans[8].end(),0.0)/maxCh;
-
-    hledMean415 = accumulate(pixMeans[2].begin(),pixMeans[2].end(),0.0)/maxCh;
-    hledNMean415 = accumulate(pixMeans[3].begin(),pixMeans[3].end(),0.0)/maxCh;
-    pedMean415 = accumulate(pixMeans[9].begin(),pixMeans[9].end(),0.0)/maxCh;
-    pedRMSMean415 = accumulate(pixMeans[10].begin(),pixMeans[10].end(),0.0)/maxCh;
-    ampMean415 = accumulate(pixMeans[11].begin(),pixMeans[11].end(),0.0)/maxCh;
-    qMean415 = accumulate(pixMeans[12].begin(),pixMeans[12].end(),0.0)/maxCh;
-    ptMean415 = accumulate(pixMeans[13].begin(),pixMeans[13].end(),0.0)/maxCh;
-
-    //need?
-    return avgEv
-    //
-    
-    return hledMean44;
-    return hledNMean44;
-    return pedMean44;
-    return pedRMSMean44;
-    return ampMean44;
-    return qMean44;
-    return ptMean44;
-
-    return hledMean415;
-    return hledNMean415;
-    return pedMean415;
-    return pedRMSMean415;
-    return ampMean415;
-    return qMean415;
-    return ptMean415;
-
-}
-//
 
 //changed to IEvent
 bool DataSummary::isHLED(IEvent *&ev){
@@ -462,6 +456,7 @@ void DataSummary::AddHLEDEv44(IEvent *&ev){
         
         delete pulse;
     }
+    //?
     Double_t medianLED = Median(amps);
     for(int i = 0; i < maxCh; i++){
         ledDist->Fill(amps[i]/medianLED);
@@ -491,6 +486,7 @@ void DataSummary::AddHLEDEv415(IEvent *&ev){
         
         delete pulse;
     }
+    //?
     Double_t medianLED = Median(amps);
     for(int i = 0; i < maxCh; i++){
         ledDist->Fill(amps[i]/medianLED);
@@ -597,23 +593,23 @@ void DataSummary::FillDt(int dp){
     if(addt){delete addt;}
     if(lin){delete lin;}
     vector<DtStruct> *thisVec;
-    // int dpt = dp - (dp >= 2)*2;
-//change
+    //split
+    int dpt = dp;
     if(dp<2){
         thisVec = &hledEv44;
-        dpt = dp;
+        dpt = dpt;
     }
     else if(dp >= 2 && dp<4){
         thisVec = &hledEv415;
-        dpt = dp - 2;
+        dpt -= 2;
     }
     else if(dp >= 4 && dp<9){
         thisVec = &testEv44;
-        dpt = dp - 4;
+        dpt -= 4;
     }
     else if(dp >= 9 && dp<14){
         thisVec = &testEv415;
-        dpt = dp - 9;
+        dpt -= 9;
     }
     //below finds y axis range s.t. it includes 99.9% of points; purpose is to neglect outliers as opposed to just using min and max 
     vector<int> yRangeInd(2);
@@ -855,6 +851,8 @@ void DataSummary::PlotFF44(){
     double tvar1 = (stats[0] > 0) ? (stats[2] / stats[0]) : 0.0;
     double tvar2 = (stats[0] > 0) ? (stats[3] / stats[0] - tvar1 * tvar1) : 0.0;
     double tvar3 = (tvar2 > 0) ? sqrt(tvar2) : 0.0;
+
+    //split?
     ampDist = tvar3 / tvar1;
 }
 
@@ -885,6 +883,8 @@ void DataSummary::PlotFF415(){
     double tvar1 = (stats[0] > 0) ? (stats[2] / stats[0]) : 0.0;
     double tvar2 = (stats[0] > 0) ? (stats[3] / stats[0] - tvar1 * tvar1) : 0.0;
     double tvar3 = (tvar2 > 0) ? sqrt(tvar2) : 0.0;
+
+    //split?
     ampDist = tvar3 / tvar1;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1027,7 +1027,8 @@ void DataSummary::PlotTimePeak415(){
 
 
 //Avg Ped RMS per Row (page 11)////////////////////////////////////////////////////////////// 
-void DataSummary::PlotPSF(){
+//split
+void DataSummary::PlotPSF44(){
     if(t_disp){delete t_disp;}
     if(misc1){delete misc1;}
     if(misc2){delete misc2;}
@@ -1043,8 +1044,92 @@ void DataSummary::PlotPSF(){
     misc2 = new TGraph(16);
 
     for(int i = 0; i < 16; i ++){
-        misc1->SetBinContent(i+1,meanPedRMS[i]);
-        misc2->SetPoint(i,(i+0.5),meanPedRMS[i]);
+        //split
+        misc1->SetBinContent(i+1,meanPedRMS44[i]);
+        misc2->SetPoint(i,(i+0.5),meanPedRMS44[i]);
+    }
+
+    fConvolutedFit = new TF1("fConvolutedFit", //Name
+        ConvolutedRMSFunction, //Formula
+        0, //x axis minimum
+        16, //x axis maximum
+        4 //number of free parameters (?)
+    );
+    // Initial parameters: [0]=offset, [1]=swing, [2]=mean (mu), [3]=sigma
+    fConvolutedFit->SetParameters(20, 10, 8, 2); // Adjust initial parameters accordingly
+    // Set limits for the parameters
+    fConvolutedFit->SetParLimits(0, 0, 100); // Limits for offset
+    fConvolutedFit->SetParLimits(1, 0, 100); // Limits for swing
+    fConvolutedFit->SetParLimits(2, 0, 16); // Limits for mu
+    fConvolutedFit->SetParLimits(3, 0, 5); // Limits for sigma
+    fConvolutedFit->SetParNames("Offset", "Swing", "Mu", "Sigma");
+    // Restrict the fit range using SetRange
+    fConvolutedFit->SetRange(0, 9);// * 0.3); // Set range from 0 to 8 * 0.3
+    // Fit the function to the data in the graph
+    misc2->Fit(fConvolutedFit, "R"); // "R" for restricted fit
+
+    misc1->GetXaxis()->SetTitle("Camera Row");
+    misc1->GetXaxis()->SetNdivisions(16);
+    misc1->GetYaxis()->SetTitle("Average Pedestal RMS [ADC counts]");
+    misc1->SetLineWidth(1);
+    misc1->SetLineColor(kBlack);
+    misc1->SetStats(0);
+    
+    misc2->SetMarkerStyle(20);
+    misc2->SetMarkerColor(kBlack);
+    misc2->SetLineColor(kBlack);
+    misc2->SetLineWidth(1);
+
+    // Optionally draw the fitted function on the same canvas
+    fConvolutedFit->SetLineColor(kRed);
+    fConvolutedFit->Draw("same");
+
+    Double_t offset = fConvolutedFit->GetParameter(0);
+    Double_t offsetError = fConvolutedFit->GetParError(0);
+    Double_t swing = fConvolutedFit->GetParameter(1);
+    Double_t swingError = fConvolutedFit->GetParError(1);
+    Double_t mu = fConvolutedFit->GetParameter(2);
+    Double_t muError = fConvolutedFit->GetParError(2);
+    Double_t sigma = fConvolutedFit->GetParameter(3);
+    Double_t sigmaError = fConvolutedFit->GetParError(3);
+    Double_t chi2 = fConvolutedFit->GetChisquare();
+    Int_t ndf = fConvolutedFit->GetNDF(); // Number of degrees of freedom
+    pt = new TPaveText(0.6, 0.6, 0.9, 0.9, "NDC"); // NDC: Normalized Device Coordinates
+    pt->SetFillColor(0); // Transparent background
+    pt->SetTextAlign(12); // Align left
+	pt->AddText(Form("Offset: %.3f +/- %.3f [ADC counts]", offset, offsetError));
+    pt->AddText(Form("Swing: %.3f +/- %.3f [ADC counts]", swing, swingError));
+    pt->AddText(Form("Mu: %.3f +/- %.3f", mu, muError));
+    pt->AddText(Form("Sigma: %.3f +/- %.3f", sigma, sigmaError));
+    pt->AddText(Form("#chi^{2}/ndf: %.2f / %d", chi2, ndf));
+
+    t_disp->cd();
+    misc1->Draw("hist");
+    misc2->Draw("P same");
+    pt->Draw();
+
+    psfSigma = sigma;
+}
+
+void DataSummary::PlotPSF415(){
+    if(t_disp){delete t_disp;}
+    if(misc1){delete misc1;}
+    if(misc2){delete misc2;}
+    if(fConvolutedFit){delete fConvolutedFit;}
+    if(pt){delete pt;}
+    t_disp = new TCanvas("Display","DataSummary",1250,1000);
+    misc1 = new TH1F("misc1", //Name
+        "41.5V Average Pedestal RMS per Row for pixel column 8", //Title
+        16, //number of bins on x axis
+        0, //x axis minimum
+        16 //x axis maximum
+    );
+    misc2 = new TGraph(16);
+
+    for(int i = 0; i < 16; i ++){
+        //split
+        misc1->SetBinContent(i+1,meanPedRMS415[i]);
+        misc2->SetPoint(i,(i+0.5),meanPedRMS415[i]);
     }
 
     fConvolutedFit = new TF1("fConvolutedFit", //Name
@@ -1114,9 +1199,17 @@ void DataSummary::PlotPSF(){
 vector<vector<int>> DataSummary::GetTrTh(){
     return trTh;
 }
-double DataSummary::GetAvgEv(){
-    return avgEv;
+
+//split
+double DataSummary::GetAvgEv44(){
+    return avgEv44;
 }
+double DataSummary::GetAvgEv415(){
+    return avgEv415;
+}
+//
+
+//split?
 double DataSummary::GetAmpDist(){
     return ampDist;
 }
@@ -1161,6 +1254,8 @@ double DataSummary::GetPTMean415(){
     return ptMean415;
 }
 //
+
+
 double DataSummary::GetPSFSigma(){
     return psfSigma;
 }
