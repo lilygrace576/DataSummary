@@ -23,7 +23,10 @@ using namespace std;
 
 class DataSummary {
 	private:
-		double avgEv;
+		//split?
+		double avgEv44;
+		double avgEv415;
+		//split?
 		double ampDist;
 
 		//split
@@ -76,9 +79,6 @@ class DataSummary {
 		void AddHLEDEv44(IEvent *&ev);
 		void AddTestEv415(IEvent *&ev);
 		void AddHLEDEv415(IEvent *&ev);
-		//
-		//added
-		void idek(vector<DtStruct> x, vector<DtStruct> y);
 
 		void ReadTrThresholds(string readStr);
 		void FillCamera(int dp);
@@ -116,7 +116,12 @@ class DataSummary {
 
 		void PlotPSF();
 		vector<vector<int>> GetTrTh();
-		double GetAvgEv();
+		
+		//split?
+		double GetAvgEv44();
+		double GetAvgEv415();
+
+		//split?
 		double GetAmpDist();
 
 		//split
@@ -126,7 +131,6 @@ class DataSummary {
 		double GetPedRMSMean44();
 		double GetqMean44();
 		double GetPTMean44();
-		double GetPSFSigma44();
 
 		double GetHLEDMean415();
 		double GetHLEDNMean415();
@@ -136,6 +140,7 @@ class DataSummary {
 		double GetPTMean415();
 		//
 
+		//split?
 		double GetPSFSigma();
 };
 
