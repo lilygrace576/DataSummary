@@ -13,13 +13,11 @@ using namespace std;
 DtStruct::DtStruct(bool isHLED) {
     if(isHLED){
         truHLED = true;
-        //changed from 2 to 4
         data = vector<Double_t>(2,0.0);
         pTrig = -1;
     }
     else{
         truHLED = false;
-        //changed from 5 to 7?
         data = vector<Double_t>(5,0.0);
         pTrig = 0;
     }
