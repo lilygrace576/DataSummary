@@ -117,7 +117,7 @@ class DataSummary {
 		void PlotPSF();
 		vector<vector<int>> GetTrTh();
 		
-		//split?
+		//split
 		double GetAvgEv44();
 		double GetAvgEv415();
 
