@@ -103,7 +103,7 @@ int main(int argc, char **argv){
 
         ofstream csvOutput;
         csvOutput.open((outStr+".csv"));
-        //split avg Ev?
+        //split avg Ev
         //split AmpDist?
         csvOutput << ds.GetAvgEv44() << "," << ds.GetAvgEv415() << "," << ds.GetAmpDist() << "," << ds.GetHLEDMean44() << "," << ds.GetHLEDNMean44() << "," << ds.GetPedMean44() << "," << ds.GetPedRMSMean44() << "," << ds.GetqMean44() << "," << ds.GetPTMean44() << ds.GetHLEDMean415() << "," << ds.GetHLEDNMean415() << "," << ds.GetPedMean415() << "," << ds.GetPedRMSMean415() << "," << ds.GetqMean415() << "," << ds.GetPTMean415() << "," << ds.GetPSFSigma();
         //
