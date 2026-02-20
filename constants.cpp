@@ -23,7 +23,6 @@ const vector<string> dTitles = {"Average Amplitude of HLED Events 44V [ADC Count
 
 // 7 vals - need to change for dp - just repeat these? -- avgVales for hledMean etc?
 // const vector<double> avgVals = {1100,0.15,3783,26,87,229,249};
-// const vector<double> avgVals = {1100,0.15,3783,26,87,229,249,1100,0.15,3783,26,87,229,249};
 //                              0    1     2    3   4    5  6   7   8   9   10 11 12  23
 const vector<double> avgVals = {1100,0.15,1100,0.15,3783,26,87,229,249,3783,26,87,229,249};
 
