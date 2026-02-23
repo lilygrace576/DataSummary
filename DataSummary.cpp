@@ -462,9 +462,9 @@ void DataSummary::AddHLEDEv44(IEvent *&ev){
         delete pulse;
     }
     //?
-    Double_t medianLED = Median(amps);
+    Double_t medianLED44 = Median(amps);
     for(int i = 0; i < maxCh; i++){
-        ledDist->Fill(amps[i]/medianLED);
+        ledDist->Fill(amps[i]/medianLED44);
     }
     hledEv44[hledEv44.size()-1].Avg();
     hledEv44[hledEv44.size()-1].data[1] =  ledDist->GetStdDev();
@@ -492,9 +492,9 @@ void DataSummary::AddHLEDEv415(IEvent *&ev){
         delete pulse;
     }
     //?
-    Double_t medianLED = Median(amps);
+    Double_t medianLED415 = Median(amps);
     for(int i = 0; i < maxCh; i++){
-        ledDist->Fill(amps[i]/medianLED);
+        ledDist->Fill(amps[i]/medianLED415);
     }
     hledEv415[hledEv415.size()-1].Avg();
     hledEv415[hledEv415.size()-1].data[1] =  ledDist->GetStdDev();
@@ -742,7 +742,7 @@ void DataSummary::PlotAverages(int dp){
 //number of events (1st page)////////////////////////////////////////////////////////////////
 void DataSummary::FillTrig(){
     if(trig){delete trig;}
-//combine 44 and 41.5 into one vector ?
+//combine 44 and 41.5 into one vector
     vector<DtStruct> testEv = testEv44
     testEv.insert(testEv.end(), testEv415.begin(), testEv415.end());
     
@@ -798,7 +798,7 @@ void DataSummary::PlotROIMusic(){
     camera = new TH2F("pixHeat","Highest Amplitude Pixels in Triggered Music [Counts]",16,-0.5,15.5,16,-0.5,15.5);
     ddt = new TH2F("musicHeat","Triggered Music [Counts]",8,-0.5,15.5,4,-0.5,15.5);
     
-//combine 44 and 41.5 into one vector ?
+//combine 44 and 41.5 into one vector
     vector<DtStruct> testEv = testEv44
     testEv.insert(testEv.end(), testEv415.begin(), testEv415.end());
 
