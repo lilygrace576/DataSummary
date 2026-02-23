@@ -23,11 +23,13 @@ using namespace std;
 
 class DataSummary {
 	private:
-		//split?
+		//split
 		double avgEv44;
 		double avgEv415;
-		//split?
-		double ampDist;
+
+		//split
+		double ampDist44;
+		double ampDist415;
 
 		//split
 		double hledMean44;
@@ -55,10 +57,14 @@ class DataSummary {
 		vector<DtStruct> hledEv44;
 		vector<DtStruct> testEv415;
 		vector<DtStruct> hledEv415;
-		//
+		
 
 		vector<vector<Double_t>> pixMeans;
-		vector<Double_t> meanPedRMS;
+
+		//split
+		vector<Double_t> meanPedRMS44;
+		vector<Double_t> meanPedRMS415;
+
 		TF1 *fConvolutedFit;
 		TH2F *camera;
 		TH2F *ddt;
@@ -74,6 +80,7 @@ class DataSummary {
 
 		//changed to IEvent
 		bool isHLED(IEvent *&ev);
+
 		//changed and split
 		void AddTestEv44(IEvent *&ev);
 		void AddHLEDEv44(IEvent *&ev);
@@ -92,7 +99,7 @@ class DataSummary {
 		void PlotTrig();
 		void PlotROIMusic();
 
-		//split(?)
+		//split
 		void PlotFF44();
 		void PlotFF415();
 
@@ -114,15 +121,19 @@ class DataSummary {
 		void PlotTimePeak415();
 		//
 
-		void PlotPSF();
+		//split
+		void PlotPSF44();
+		void PlotPSF415();
+
 		vector<vector<int>> GetTrTh();
 		
 		//split
 		double GetAvgEv44();
 		double GetAvgEv415();
 
-		//split?
-		double GetAmpDist();
+		//split
+		double GetAmpDist44();
+		double GetAmpDist415();
 
 		//split
 		double GetHLEDMean44();
@@ -140,7 +151,6 @@ class DataSummary {
 		double GetPTMean415();
 		//
 
-		//split?
 		double GetPSFSigma();
 };
 
