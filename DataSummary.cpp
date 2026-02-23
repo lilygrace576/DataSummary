@@ -38,8 +38,9 @@ DataSummary::DataSummary(char* dateStr){
     avgEv44 = 0;
     avgEv415 = 0;
 
-    //split?
-    ampDist = 0;
+    //split
+    ampDist44 = 0;
+    ampDist415 = 0;
 
     //split
     hledMean44 = 0;
@@ -539,14 +540,14 @@ void DataSummary::FillCamera(int dp){
     for(int i = 0; i < maxCh; i++){
         int nx, ny;
         FindBin(i,&nx,&ny);
-// ? extra dp values matter?
+
         camera->SetBinContent(nx+1,ny+1,pixMeans[dp][i]);
     }
     camera->SetStats(0);
     //below finds histogram scale s.t. it includes 95% of pixels; purpose is to neglect outliers as opposed to just using min and max 
     vector<int> hRangeInd(2);
     vector<Double_t> valSort;
-// ? extra dp values matter?
+
     for(auto i: pixMeans[dp]){
         valSort.push_back(i);
     }
@@ -688,7 +689,7 @@ void DataSummary::FillDt(int dp){
 
 void DataSummary::PlotAverages(int dp){
     if(leg){delete leg;}
-// ?
+
     FillCamera(dp);
     FillDt(dp);
     
@@ -835,7 +836,6 @@ void DataSummary::PlotFF44(){
         1499 //x axis maximum
     );
 
-// include 2? split?
     for(auto i: pixMeans[0]){
         misc1->Fill(i);
     }
@@ -852,8 +852,8 @@ void DataSummary::PlotFF44(){
     double tvar2 = (stats[0] > 0) ? (stats[3] / stats[0] - tvar1 * tvar1) : 0.0;
     double tvar3 = (tvar2 > 0) ? sqrt(tvar2) : 0.0;
 
-    //split?
-    ampDist = tvar3 / tvar1;
+    //split
+    ampDist44 = tvar3 / tvar1;
 }
 
 void DataSummary::PlotFF415(){
@@ -884,8 +884,8 @@ void DataSummary::PlotFF415(){
     double tvar2 = (stats[0] > 0) ? (stats[3] / stats[0] - tvar1 * tvar1) : 0.0;
     double tvar3 = (tvar2 > 0) ? sqrt(tvar2) : 0.0;
 
-    //split?
-    ampDist = tvar3 / tvar1;
+    //split
+    ampDist415 = tvar3 / tvar1;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1036,7 +1036,7 @@ void DataSummary::PlotPSF44(){
     if(pt){delete pt;}
     t_disp = new TCanvas("Display","DataSummary",1250,1000);
     misc1 = new TH1F("misc1", //Name
-        "Average Pedestal RMS per Row for pixel column 8", //Title
+        "44V Average Pedestal RMS per Row for pixel column 8", //Title
         16, //number of bins on x axis
         0, //x axis minimum
         16 //x axis maximum
@@ -1209,9 +1209,12 @@ double DataSummary::GetAvgEv415(){
 }
 //
 
-//split?
-double DataSummary::GetAmpDist(){
-    return ampDist;
+//split
+double DataSummary::GetAmpDist44(){
+    return ampDist44;
+}
+double DataSummary::GetAmpDist415(){
+    return ampDist415;
 }
 
 //split
