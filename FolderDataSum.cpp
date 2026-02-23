@@ -39,7 +39,7 @@ int main(int argc, char **argv){
         ds.PlotROIMusic();
         ds.t_disp->Print((outStr+".pdf").c_str());
 
-        //split?
+        //split
         ds.PlotFF44();
         ds.t_disp->Print((outStr+".pdf").c_str());
 
@@ -91,7 +91,7 @@ int main(int argc, char **argv){
         ds.t_disp->Print((outStr+".pdf").c_str()); 
         //
 
-        //split?
+        //split
         ds.PlotPSF44();
         ds.t_disp->Print((outStr+".pdf").c_str()); 
 
@@ -103,9 +103,8 @@ int main(int argc, char **argv){
 
         ofstream csvOutput;
         csvOutput.open((outStr+".csv"));
-        //split avg Ev
-        //split AmpDist?
-        csvOutput << ds.GetAvgEv44() << "," << ds.GetAvgEv415() << "," << ds.GetAmpDist() << "," << ds.GetHLEDMean44() << "," << ds.GetHLEDNMean44() << "," << ds.GetPedMean44() << "," << ds.GetPedRMSMean44() << "," << ds.GetqMean44() << "," << ds.GetPTMean44() << ds.GetHLEDMean415() << "," << ds.GetHLEDNMean415() << "," << ds.GetPedMean415() << "," << ds.GetPedRMSMean415() << "," << ds.GetqMean415() << "," << ds.GetPTMean415() << "," << ds.GetPSFSigma();
+        //split avg Ev and ampDist
+        csvOutput << ds.GetAvgEv44() << "," << ds.GetAvgEv415() << "," << ds.GetAmpDist44() << "," << ds.GetAmpDist415() << "," << ds.GetHLEDMean44() << "," << ds.GetHLEDNMean44() << "," << ds.GetPedMean44() << "," << ds.GetPedRMSMean44() << "," << ds.GetqMean44() << "," << ds.GetPTMean44() << ds.GetHLEDMean415() << "," << ds.GetHLEDNMean415() << "," << ds.GetPedMean415() << "," << ds.GetPedRMSMean415() << "," << ds.GetqMean415() << "," << ds.GetPTMean415() << "," << ds.GetPSFSigma();
         //
         for(vector<int>& vec : ds.GetTrTh()){
             csvOutput << ",(" << vec[0] << "," << vec[1] << ")";
