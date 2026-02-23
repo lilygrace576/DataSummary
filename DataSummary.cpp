@@ -116,6 +116,8 @@ void DataSummary::ReadEv(string readStr){
     IEvent *ev;
 
     int countF = 0;
+    int countF44 = 0;
+    int countF415 = 0;
 
     DIR *dir;
     struct dirent *ent;
@@ -171,9 +173,11 @@ void DataSummary::ReadEv(string readStr){
                     if(isHLED(ev)){
                         if(evRoundBVAvg == 44) {
                             AddTestEv44(ev);
+                            countF44++;
                         }
                         else if(evRoundBVAvg == 41.5) {
                             AddTestEv415(ev);
+                            countF415++;
                         }
                     }
                     else{
@@ -298,8 +302,8 @@ void DataSummary::ReadEv(string readStr){
         sort(testEv415.begin(),testEv415.end());
 
         //split
-        avgEv44 = testEnt44/countF;
-        avgEv415 = testEnt415/countF;
+        avgEv44 = testEnt44/countF44;
+        avgEv415 = testEnt415/countF415;
 
         //split
         hledMean44 = accumulate(pixMeans[0].begin(),pixMeans[0].end(),0.0)/maxCh;
