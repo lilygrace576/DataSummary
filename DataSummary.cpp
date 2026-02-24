@@ -92,6 +92,11 @@ DataSummary::DataSummary(char* dateStr){
     t_disp = new TCanvas("Display","DataSummary",2500,1000);
     isData = false;
 
+    //
+    isData44 = false;
+    isData415 = false;
+    //
+
     //changed paths to pull from Merged Data
     string evStr = Form("%sMergedData/Output/%s/",dataDir.c_str(),dateStr);
     cout << evStr << endl;
@@ -116,6 +121,7 @@ void DataSummary::ReadEv(string readStr){
     IEvent *ev;
 
     int countF = 0;
+    //
     int countF44 = 0;
     int countF415 = 0;
 
@@ -257,53 +263,108 @@ void DataSummary::ReadEv(string readStr){
     if(countF != 0){
         isData = true;
 
-        int hledEnt44 = hledEv44.size();
-        int testEnt44 = testEv44.size();
-        int hledEnt415 = hledEv415.size();
-        int testEnt415 = testEv415.size();
+        //
+        if(countF415 != 0){
+            isData415 = true;
+            int hledEnt415 = hledEv415.size();
+            int testEnt415 = testEv415.size();
+            for(int i = 0; i < maxCh; i++){
+                for(int j = 2; j < 4; j++){
+                    pixMeans[j][i] /= hledEnt415;
+                }
+                for(int j = 9; j < 14; j++){
+                    pixMeans[j][i] /= testEnt415;
+                }
+            }
+            for(int i = 0; i < 16; i++){
+                meanPedRMS415[i] /= testEnt415;
+            }
 
-        for(int i = 0; i < maxCh; i++){
-            //split
-            for(int j = 0; j < 2; j++){
-                pixMeans[j][i] /= hledEnt44;
+            Double_t medianLED415 = Median(pixMeans[3]);
+            for(int i = 0; i < maxCh; i++){
+                pixMeans[3][i] /= medianLED415;
             }
-            for(int j = 2; j < 4; j++){
-                pixMeans[j][i] /= hledEnt415;
+            sort(hledEv415.begin(),hledEv415.end());
+            sort(testEv415.begin(),testEv415.end());
+
+            avgEv415 = testEnt415/countF415;
+        }
+        //
+
+        //
+        if(countF44 != 0){
+            isData44 = true;
+            int hledEnt44 = hledEv44.size();
+            int testEnt44 = testEv44.size();
+
+            for(int i = 0; i < maxCh; i++){
+                for(int j = 0; j < 2; j++){
+                    pixMeans[j][i] /= hledEnt44;
+                }
+                for(int j = 4; j < 9; j++){
+                    pixMeans[j][i] /= testEnt44; 
+                }
             }
-            for(int j = 4; j < 9; j++){
-                pixMeans[j][i] /= testEnt44; 
+            for(int i = 0; i < 16; i++){
+                meanPedRMS44[i] /= testEnt44;
             }
-            for(int j = 9; j < 14; j++){
-                pixMeans[j][i] /= testEnt415;
+            Double_t medianLED44 = Median(pixMeans[1]);
+            for(int i = 0; i < maxCh; i++){
+                pixMeans[1][i] /= medianLED44;
             }
+            sort(hledEv44.begin(),hledEv44.end());
+            sort(testEv44.begin(),testEv44.end());
+
+            avgEv44 = testEnt44/countF44;
         }
 
-        //split
-        for(int i = 0; i < 16; i++){
-            meanPedRMS44[i] /= testEnt44;
-            meanPedRMS415[i] /= testEnt415;
-        }
+        // int hledEnt44 = hledEv44.size();
+        // int testEnt44 = testEv44.size();
+        // int hledEnt415 = hledEv415.size();
+        // int testEnt415 = testEv415.size();
 
-        //split
-        Double_t medianLED44 = Median(pixMeans[1]);
-        for(int i = 0; i < maxCh; i++){
-            pixMeans[1][i] /= medianLED44;
-        }
+        // for(int i = 0; i < maxCh; i++){
+        //     //split
+        //     for(int j = 0; j < 2; j++){
+        //         pixMeans[j][i] /= hledEnt44;
+        //     }
+        //     for(int j = 2; j < 4; j++){
+        //         pixMeans[j][i] /= hledEnt415;
+        //     }
+        //     for(int j = 4; j < 9; j++){
+        //         pixMeans[j][i] /= testEnt44; 
+        //     }
+        //     for(int j = 9; j < 14; j++){
+        //         pixMeans[j][i] /= testEnt415;
+        //     }
+        // }
 
-        Double_t medianLED415 = Median(pixMeans[3]);
-        for(int i = 0; i < maxCh; i++){
-            pixMeans[3][i] /= medianLED415;
-        }
+        // //split
+        // for(int i = 0; i < 16; i++){
+        //     meanPedRMS44[i] /= testEnt44;
+        //     meanPedRMS415[i] /= testEnt415;
+        // }
 
-        //split
-        sort(hledEv44.begin(),hledEv44.end());
-        sort(testEv44.begin(),testEv44.end());
-        sort(hledEv415.begin(),hledEv415.end());
-        sort(testEv415.begin(),testEv415.end());
+        // //split
+        // Double_t medianLED44 = Median(pixMeans[1]);
+        // for(int i = 0; i < maxCh; i++){
+        //     pixMeans[1][i] /= medianLED44;
+        // }
 
-        //split
-        avgEv44 = testEnt44/countF44;
-        avgEv415 = testEnt415/countF415;
+        // Double_t medianLED415 = Median(pixMeans[3]);
+        // for(int i = 0; i < maxCh; i++){
+        //     pixMeans[3][i] /= medianLED415;
+        // }
+
+        // //split
+        // sort(hledEv44.begin(),hledEv44.end());
+        // sort(testEv44.begin(),testEv44.end());
+        // sort(hledEv415.begin(),hledEv415.end());
+        // sort(testEv415.begin(),testEv415.end());
+
+        // //split
+        // avgEv44 = testEnt44/countF44;
+        // avgEv415 = testEnt415/countF415;
 
         //split
         hledMean44 = accumulate(pixMeans[0].begin(),pixMeans[0].end(),0.0)/maxCh;
@@ -1270,3 +1331,12 @@ double DataSummary::GetPSFSigma(){
 bool DataSummary::hasData(){
     return isData;
 }
+
+//
+bool DataSummary::hasData44(){
+    return isData44;
+}
+bool DataSummary::hasData415(){
+    return isData415;
+}
+//
