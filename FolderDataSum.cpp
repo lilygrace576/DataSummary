@@ -21,12 +21,18 @@ int main(int argc, char **argv){
 
     std::string mount = argv[2];
     
+    // add second mount condition - same as in mergeddata 
     if (mount == "y"){ // with usingin htcondor you need to have contianers and some use full paths and other use mounts this lets you specify
         std::cout << "using mounted directory path" << std::endl;
         mnt="/mnt/";
-        //changed from Data to DataAnalysis
-        dataDir = "/mnt/DataAnalysis/";
+        // dataDir = "/mnt/DataAnalysis/";
     }
+    else if(mount != "n"){
+        std::cout << "using specific directory path" << std::endl;
+        mnt=mount.c_str();
+    }
+
+    dataDir = Form("%sDataAnalysis/",mnt.c_str());
 
     string outStr = Form("%s%s",outDir.c_str(),argv[1]);
     DataSummary ds(argv[1]);
