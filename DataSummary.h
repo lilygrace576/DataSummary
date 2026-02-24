@@ -75,7 +75,14 @@ class DataSummary {
 		TLine *lin;
 		TLegend *leg;
 		TPaveText *pt;
+
 		bool isData;
+		
+		//
+		bool isData44;
+		bool isData415;
+		//
+
 		void ReadEv(string readStr);
 
 		//changed to IEvent
@@ -95,7 +102,13 @@ class DataSummary {
 	public:
 		TCanvas *t_disp;
 		DataSummary(char* dateStr);
+
 		bool hasData();
+		//
+		bool hasData44();
+		bool hasData415();
+		//
+
 		void PlotTrig();
 		void PlotROIMusic();
 
